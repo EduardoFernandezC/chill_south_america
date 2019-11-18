@@ -1,2 +1,2 @@
 # Chill projections for South America
-At this point this respository contains the first stepts to start working on this project. In the future, I hope to provide all the scripts and data generated.
+First plots generated to visualize the distributions of the weather stations across South America. Data downloaded from the GSOD database as well as from Chilean and Argentinean sources. Code/1_weather_data.R has the complete script to get the weather data into R.
