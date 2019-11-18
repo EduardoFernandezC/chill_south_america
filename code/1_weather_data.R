@@ -9,7 +9,7 @@ library(alternativechillfunctions)
 # List 1500 stations from the GSOD database using Quillota as central point. This may change of course, but 
 # temperate trees are normally grown at southern places.
 
-SA_GSOD_Weat_Stat <- handle_gsod("list_stations", location = c(-71.2092, -32.8958),
+SA_GSOD_Weat_Stat <- handle_gsod("list_stations", location = c(-71.2092, -32.8958, 130),
                                  stations_to_choose_from = 1500)
 
 
