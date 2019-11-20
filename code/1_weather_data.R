@@ -26,6 +26,16 @@ SA_GSOD_WS_80s_17s <- SA_GSOD_WS_80s_17s[-which(SA_GSOD_WS_80s_17s$STATION.NAME 
                                                   SA_GSOD_WS_80s_17s$STATION.NAME == "FOX BAY"), ]
 
 
+# Check for duplicated station names. Normally, they have a different chillR_code and have different data.
+# This is very important in case we want to patch data from weather stations located very close.
+# Add a "2" for the duplicated name
+
+SA_GSOD_WS_80s_17s$STATION.NAME <- as.character(SA_GSOD_WS_80s_17s$STATION.NAME)
+
+SA_GSOD_WS_80s_17s[which(duplicated(SA_GSOD_WS_80s_17s$STATION.NAME)), "STATION.NAME"] <-
+  paste(SA_GSOD_WS_80s_17s[which(duplicated(SA_GSOD_WS_80s_17s$STATION.NAME)), "STATION.NAME"], "2")
+
+
 # Download the data from the GSOD database ====
 
 
@@ -34,7 +44,7 @@ SA_GSOD_WS_80s_17s <- SA_GSOD_WS_80s_17s[-which(SA_GSOD_WS_80s_17s$STATION.NAME 
 #for (i in 1 : length(SA_GSOD_WS_80s_17s$chillR_code)) {
   
   #data <- handle_gsod("download_weather", location = as.character(SA_GSOD_WS_80s_17s[i, "chillR_code"]),
-                      #time_interval = c(1980, 2019), station_list = SA_GSOD_WS_80s_17s)
+                      #time_interval = c(1980, 2017), station_list = SA_GSOD_WS_80s_17s)
   
   # Check if the weather station "i" has data or not. If not, it creates a blank DF to avoid errors inside the
   # for loop
@@ -45,7 +55,7 @@ SA_GSOD_WS_80s_17s <- SA_GSOD_WS_80s_17s[-which(SA_GSOD_WS_80s_17s$STATION.NAME 
     
     #{SA_GSOD_WS_80s_17s[i, "DATA"] <- "NO_DATA"
      
-     #data <- make_all_day_table(data.frame(Year = c(1980, 2019),
+     #data <- make_all_day_table(data.frame(Year = c(1980, 2017),
                                            #Month = c(1, 12),
                                            #Day = c(1, 31), 
                                            #Tmin = as.numeric(NA), 
@@ -80,8 +90,8 @@ SA_GSOD_WS_80s_17s <- SA_GSOD_WS_80s_17s[-which(SA_GSOD_WS_80s_17s$STATION.NAME 
 
 
 
-
 # Check for completeness of the data in each WS ====
+
 
 completeness <- lapply(SA_GSOD_list, FUN = perc_complete)
 
@@ -103,24 +113,14 @@ SA_GSOD_WS_90 <- SA_GSOD_WS_80s_17s[SA_GSOD_WS_80s_17s$Perc_Tmin >= 90 &
                                       SA_GSOD_WS_80s_17s$Perc_Tmin >= 90, ]
 
 
-# Change the name of the elements of the list for further subsetting
+# Change the name of the elements of the main data list for further subsetting
 
 names(SA_GSOD_list) <- as.character(SA_GSOD_WS_80s_17s$STATION.NAME)
 
 
 # Select only the dataframes having more than 90% of data complete from the GSOD database
 
-SA_GSOD_list_90 <- SA_GSOD_list[which(unique(names(SA_GSOD_list)) %in% as.character(SA_GSOD_WS_90$STATION.NAME))]
-
-
-# Select only the data until 31/12/2017
-
-for (i in 1 : length(SA_GSOD_list_90)){
-  
-  SA_GSOD_list_90[[i]] <- subset(SA_GSOD_list_90[[i]], Year %in% c(1980 : 2017))}
-
-rm(i)
-
+SA_GSOD_list_90 <- SA_GSOD_list[which(names(SA_GSOD_list) %in% as.character(SA_GSOD_WS_90$STATION.NAME))]
 
 
 
