@@ -1,8 +1,4 @@
-library(chillR)
 library(ggplot2)
-library(dplyr)
-library(tidyr)
-library(alternativechillfunctions)
 
 # Plot the first map only with GSOD weather stations ====
 

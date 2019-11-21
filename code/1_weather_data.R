@@ -1,7 +1,4 @@
 library(chillR)
-library(ggplot2)
-library(dplyr)
-library(tidyr)
 library(alternativechillfunctions)
 
 # Look for weather stations ====
