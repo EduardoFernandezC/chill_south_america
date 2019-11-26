@@ -8,7 +8,7 @@ library(alternativechillfunctions)
 
 SA_GSOD_WS_90_aux_data <- list()
 
-for (i in 1 : 3){
+for (i in  79 : length(SA_GSOD_WS_90$chillR_code)){
   
   # Extract the latitude and longitude of the i element of the list that contains weather data
   # for places with 90% of data complete between 1980 - 2017
@@ -98,24 +98,20 @@ for (i in 1 : 3){
   
   SA_GSOD_WS_90_aux_data[[i]] <- aux_data_list}
   
-  
+rm(aux_data, aux_data_list, my_point, SA_GSOD_alt_WS, i, end, j, start)
  
 
 
 
-
-
-
-
- # Patch missing days 
+# Patch missing days 
   
-  SA_GSOD_WS_90_patched[[i]] <- patch_daily_temperatures2(SA_GSOD_list_90[[i]], SA_GSOD_alt_list,
-                                                          max_mean_bias = 4, max_stdev_bias = 4)
+patch_daily_temperatures(SA_GSOD_list_90[[2]], SA_GSOD_WS_90_aux_data[[2]],
+                          max_mean_bias = 4, max_stdev_bias = 4)
 
 
 
 
-rm(i, my_point)
+
 
 for (i in 1 : 98)
   
@@ -126,4 +122,4 @@ tempResponse_daily_list(patch[[1]], latitude = SA_GSOD_WS_90[i, "Lat"],
                         Start_JDay = 121, End_JDay = 243)
 
 
-j <- 12
+
