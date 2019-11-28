@@ -163,6 +163,14 @@ CL_list_90 <- c(CL_list_90, chile_weather("station_list_data", Initial_Date = "1
 
 rm(path_zip_tmax, path_zip_tmin)
 
+
+# Check for duplicated weather station names
+
+CL_WS_90$Name <- as.character(CL_WS_90$Name)
+
+CL_WS_90[which(duplicated(CL_WS_90$Name)), "Name"] <- paste(CL_WS_90[which(duplicated(CL_WS_90$Name)),
+                                                                     "Name"], "2")
+
 # Change the name of the elements inside the list (Punta Arenas is repeated but I will keep since appearently
 # they belog to different organization)
 
@@ -195,7 +203,7 @@ names(AR_list) <- substr(list.files("./data/Argentina/"), 1, nchar(list.files(".
 
 # Make a DF of the weather stations from the patagonia project
 
-AR_Weat_Stat <- data.frame(Station_name = substr(list.files("./data/Argentina/"), 1, nchar(list.files("./data/Argentina/")) - 4),
+AR_Weat_Stat <- data.frame(Name = substr(list.files("./data/Argentina/"), 1, nchar(list.files("./data/Argentina/")) - 4),
                     Latitude = c(-39.38, -41.97, -41.25, -38.95, -43.87, -39.02, -43.23, -40.85),
                     Longitude = c(-62.62, -71.50, -68.73, -67.97, -69.03, -64.08, -65.32, -63.02),
                     Elevation = c(22, 337, 887, 271, 590, 59, 10, 7),
@@ -228,7 +236,10 @@ AR_WS_90 <- AR_Weat_Stat[AR_Weat_Stat$Perc_Tmax >= 90 & AR_Weat_Stat$Perc_Tmin >
 
 # Extract the data from the WS having more than 90% of records complete
 
-AR_list_90 <- AR_list[which(unique(names(AR_list)) %in% as.character(AR_WS_90$Station_name))]
+AR_list_90 <- AR_list[which(unique(names(AR_list)) %in% as.character(AR_WS_90$Name))]
+
+
+
 
 
 

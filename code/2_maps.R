@@ -49,4 +49,15 @@ ggsave("./figures/WS_90_complete_GSOD_CR_AR.png", dpi = 800)
 
 
 
+# Map for all the weather stations remaining after the patching and fixing process (28/11/19) ====
+
+ggplot() + SA_countries + theme_bw() +
+  geom_point(aes(Longitude, Latitude), data = All_WS_90, color = "black", size = 1) +
+  labs(x = "Longitude", y = "Latitude") +
+  theme(panel.grid = element_blank()) +
+  coord_equal(xlim = c(-30, -85))
+
+ggsave("./figures/All_WS.png", dpi = 800)
+
+
 
