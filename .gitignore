@@ -3,6 +3,7 @@
 .Rapp.history
 
 # Session Data files
+all_data.RData
 .RData
 
 # Example code in package build process

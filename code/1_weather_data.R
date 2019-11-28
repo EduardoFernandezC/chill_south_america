@@ -33,6 +33,11 @@ SA_GSOD_WS_80s_17s[which(duplicated(SA_GSOD_WS_80s_17s$STATION.NAME)), "STATION.
   paste(SA_GSOD_WS_80s_17s[which(duplicated(SA_GSOD_WS_80s_17s$STATION.NAME)), "STATION.NAME"], "2")
 
 
+# Remove the character "/" from the names of the weather stations
+
+SA_GSOD_WS_80s_17s$STATION.NAME <- gsub("/", " ", SA_GSOD_WS_80s_17s$STATION.NAME)
+
+
 # Download the data from the GSOD database ====
 
 
