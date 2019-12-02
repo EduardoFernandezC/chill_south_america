@@ -38,4 +38,4 @@ vignettes/*.pdf
 rsconnect/
 
 # rar files
-/*.rar
+*.rar
