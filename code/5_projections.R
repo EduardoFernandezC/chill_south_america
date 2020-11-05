@@ -101,8 +101,8 @@ unlink("./data/projections", recursive = T)
 RCPs <- c("rcp45", "rcp85")
 Times <- c(2050, 2085)
 
-for (i in 1 : length(weather_info$Name))
-  for (RCP in RCPs)
+for (i in 1 : length(weather_info$Name)){
+  for (RCP in RCPs){
     for (Time in Times){
       
       start_year <- Time - 15
@@ -122,12 +122,14 @@ for (i in 1 : length(weather_info$Name))
                                  paste(i, "_", weather_info[i, "Name"], "_", RCP, "_", Time, sep = ""))
       
     }
+  }
+}
 
 
 # Compute climate-related metrics for future scenarios
 
-for (i in 1 : 157)
-  for(RCP in RCPs)
+for (i in 1 : 157){
+  for(RCP in RCPs){
     for(Time in Times){
       
       temps <- chillR::load_temperature_scenarios("data/future_temps/",
@@ -141,16 +143,10 @@ for (i in 1 : 157)
       chillR::save_temperature_scenarios(chill, "./data/future_chill",
                                          paste(i, "_", weather_info[i, "Name"], "_", RCP,
                                                "_", Time, sep = ""))
-      }
+    }
+  }
+}
   
   
-  
-  
-  
-  
-  
-  
-  
-  rm(chills)
-  i <- 1
+
   
