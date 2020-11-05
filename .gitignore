@@ -5,6 +5,7 @@
 # Session Data files
 all_data.RData
 fixed_WS.RData
+*.RData
 .RData
 
 # Example code in package build process
@@ -39,3 +40,7 @@ rsconnect/
 
 # rar files
 *.rar
+data/*.rar
+
+# csv data files
+data/future_temps/
