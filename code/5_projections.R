@@ -7,7 +7,8 @@ weather_data <- list()
 
 for (i in 1 : length(All_patched_fixed)){
   
-  weather_data[[i]] <- All_patched_fixed[[i]][["weather"]]}
+  weather_data[[i]] <- All_patched_fixed[[i]][["weather"]]
+}
 
 
 # Change the name of the elements of the list
@@ -39,7 +40,9 @@ for (i in 1 : length(weather_data)){
                                           Start_JDay = Start_JDay, End_JDay = End_JDay, misstolerance = 7)[[1]]
   
   write.csv(chill_observed[[i]], paste("./data/projections/observed", i, "_", weather_info[i, "Name"],
-                                       "_observed_chill.csv", sep = ""), row.names = FALSE)}
+                                       "_observed_chill.csv", sep = ""), row.names = FALSE)
+}
+
 
 
 #make_chill_plot(chill_observed[[98]],"Chill_Portions",metriclabel="Annual chill (Chill Portions)")
@@ -66,7 +69,9 @@ for(i in 1 : length(weather_data)){
                                                             temperature_scenario = historic_temperature_scenarios)
   
   save_temperature_scenarios(historic_weather_scenarios[[i]], "./data/projections/historic_simulated_temps", 
-                             paste(i, weather_info[i, "Name"], sep = "_"))}
+                             paste(i, weather_info[i, "Name"], sep = "_"))
+}
+
 
 rm(historic_temperature_scenarios)
 
@@ -81,8 +86,8 @@ for (i in 3 : length(historic_weather_scenarios)){
                                             Start_JDay = Start_JDay, End_JDay = End_JDay)
   
   save_temperature_scenarios(hist_sim_chill[[i]], "./data/projections/hist_sim_chill",
-                             paste(i, weather_info[i, "Name"], "ref_year", sep = "_"))}
-
+                             paste(i, weather_info[i, "Name"], "ref_year", sep = "_"))
+}
 
 
 # Compress the folder projections (/hist_sim_chill, /historic_simulated_temps, /observed) ====
