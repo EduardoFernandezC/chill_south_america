@@ -28,6 +28,8 @@ The next task is to interpolate chill accumulation between stations and
 produce a raster map. However, we need to identify reliable and
 plausible proxies to be used in the interpolation procedure.
 
+Lars and Ilja are on board now…
+
 # References
 
 <div id="refs" class="references hanging-indent">
