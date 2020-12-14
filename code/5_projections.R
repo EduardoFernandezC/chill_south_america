@@ -19,6 +19,10 @@ names(weather_data) <- All_WS_90$Name
 
 weather_info <- All_WS_90
 
+# Save the information on the weather stations
+
+write.csv(weather_info, "data/weather_info.csv", row.names = FALSE)
+
 # Clean the global environment
 
 rm(All_data_90, All_patched, All_patched_fixed, All_WS_90, i)

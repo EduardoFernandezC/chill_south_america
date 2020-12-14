@@ -1,11 +1,14 @@
 library(stringr)
 
 #I dont understand which files are used in the supplementary materials of the tunesia paper
-#also I dont understand the files in the 
+#also I dont understand the files in the... (?)
+
+
+# use unzip to read the historic_sim_chill as well as the observed_chill
 
 #read hitoric chill calculated on weather generator data
 setwd('southamerica_chill/chill_south_america/data/projections/hist_sim_chill/')
-temp = list.files(pattern="*.csv")
+temp <- list.files('', pattern="*.csv")
 hist_sim_chill = lapply(temp, read.csv)
 
 #calculate safe chill for each station and year

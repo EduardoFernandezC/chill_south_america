@@ -13,8 +13,8 @@ library(ggplot2)
 ####also from Luedeling and Benmoussa 2020 but their code looks suspiciously the same as the websites (with fitting coefficients and comments for completely different dataset)
 
 
-#read station coordinates with the projected chill (future and historic)
-stations <- read.csv('data/all_chill_projections.csv')
+#read station coordinates with the projected chill (future and historic). Is this safe winter chill?
+stations <- read.csv('data/Lars/all_chill_projections.csv')
 
 #change column name from 'Altitude' to 'Elevation', so that it is coherent
 colnames(stations)[2] <- 'Elevation'

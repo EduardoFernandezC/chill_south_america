@@ -1,0 +1,158 @@
+"station_name","year","safe_chill"
+"ARTURO MERINO BENITEZ INTL","observed",55.3335182215422
+"LA RIOJA","observed",22.0274294474677
+"Lago Peuelas","observed",64.085908229356
+"Los Panguiles","observed",58.2546341606855
+"Pudahuel Santiago","observed",63.6724596012597
+"Vilcuya","observed",53.0588216747962
+"Alicahue","observed",50.6846055665027
+"Quinta Normal Santiago","observed",56.5078748960243
+"Cerro Calan","observed",53.6681183246582
+"Eulogio Sanchez Tobalaba Ad.","observed",59.1451567824314
+"Los Condores","observed",43.3339661612328
+"Santo Domingo Ad.","observed",66.3483780646122
+"RIO CUARTO AREA DE MATERIAL","observed",45.9002344271777
+"Pirque","observed",64.8452104657928
+"La Tranquilla","observed",30.8391622199335
+"Illapel Dga","observed",37.8432925991762
+"Cogoti Embalse","observed",26.7770162449454
+"Las Ramadas","observed",31.3072514677675
+"General Freire Curico Ad.","observed",77.0144724991111
+"Paloma Embalse","observed",30.3658636118172
+"Potrero Grande","observed",79.8450776740183
+"Talca U.C.","observed",73.8337948135969
+"Hurtado","observed",23.6825777788128
+"AMBROSIO L V TARAVELLA","observed",32.1123140203526
+"Colorado","observed",79.0496361682988
+"La Ortiga","observed",30.2922874461911
+"Rivadavia","observed",18.0524643653095
+"La Florida La Serena Ad.","observed",54.0489267990415
+"Parral","observed",76.7789132617178
+"Digua Embalse","observed",84.6948989300026
+"El Trapiche","observed",22.122058394895
+"Bernardo O'Higgins Chillan Ad.","observed",79.563177829997
+"Diguillin","observed",81.348156014221
+"Carriel Sur Concepcion.","observed",72.6884501698369
+"CATAMARCA","observed",17.6323886791736
+"Santa Juana","observed",15.0681472887127
+"Lautaro Embalse","observed",6.26207848618357
+"Traiguen","observed",85.6094406467329
+"Maquehue Temuco Ad.","observed",82.8304363204395
+"Santa Rosa Aero","observed",58.1019279066031
+"Pichoy Valdivia Ad.","observed",84.9121791452563
+"Adolfo Matthei","observed",84.5324589384053
+"Canal Bajo Osorno Ad.","observed",86.2106146971765
+"El Tepual Puerto Montt Ap.","observed",88.4890032040621
+"Cerro Moreno Antofagasta Ap.","observed",4.72514389215098
+"PRESIDENTE PERON","observed",66.0879936417375
+"Futaleufu Ad.","observed",85.2382786615076
+"El Loa Calama Ad.","observed",30.2870100627447
+"Chiu-Chiu","observed",34.4326281758047
+"Diego Aracena Iquique Ap.","observed",0
+"Teniente Vidal Coyhaique Ad.","observed",82.898411285579
+"Balmaceda Ad.","observed",75.2279167870708
+"Chile Chico Ad.","observed",83.0742950804469
+"Azapa","observed",0
+"Lord Cochrane Ad.","observed",76.0820304698269
+"Chacalluta Arica Ap.","observed",0
+"SANTA ROSA","observed",55.0607894120049
+"Torres Del Paine","observed",78.142428252391
+"Punta Arenas","observed",77.6582494799151
+"Punta Arenas 2","observed",81.5269320210353
+"Ascasubi","observed",68.0497004584366
+"Maquinchao","observed",75.666523687012
+"Neuquen","observed",69.8756422969053
+"Trelew","observed",74.451171298155
+"Viedma","observed",71.7756952070749
+"MARCOS JUAREZ","observed",38.5274547599257
+"SANTIAGO DEL ESTERO","observed",13.7615731235984
+"SAN CARLOS DE BARILOCHE","observed",83.4062493816763
+"CERES","observed",23.9023721682699
+"EL PLUMERILLO","observed",52.3909731041293
+"EL TEPUAL INTL","observed",86.3765651322212
+"JUNIN","observed",50.7957615753634
+"ROSARIO","observed",40.4115421445412
+"SAUCE VIEJO","observed",29.9757656741909
+"GENERAL URQUIZA","observed",34.6938410581495
+"COMANDANTE ESPORA","observed",59.0479605460574
+"CERRO MORENO INTL","observed",3.02671436168413
+"SALTA","observed",25.5654730097444
+"ESQUEL","observed",80.3632192783537
+"JUJUY","observed",19.4776398036193
+"SAN JUAN","observed",45.4469636099595
+"GOBERNADOR CASTELLO","observed",67.8342527898871
+"RECONQUISTA AERO","observed",16.9750555160667
+"GUALEGUAYCHU","observed",36.809893770134
+"MINISTRO PISTARINI","observed",47.615556603035
+"TANDIL","observed",68.5065929447351
+"AEROPARQUE JORGE NEWBERY","observed",39.1754917186675
+"LAGUNA DE LOS PATOS INTL","observed",42.4337926458335
+"ALMIRANTE ZAR","observed",69.1471982323007
+"NUEVA HESPERIDES INTL","observed",25.5069936824188
+"COMODORO PIERRESTEGUI","observed",26.7999503095685
+"SAN RAFAEL","observed",51.3881367658942
+"RESISTENCIA","observed",11.8678455642694
+"CORRIENTES","observed",8.44530332386584
+"MAR DEL PLATA","observed",67.7295274827961
+"PASO DE LOS TOROS","observed",38.4292811100095
+"PASO DE LOS LIBRES","observed",18.9200256666533
+"CARRASCO INTL","observed",46.3805021871992
+"ARTIGAS INTL","observed",21.7791247318806
+"BALMACEDA","observed",76.2685082439455
+"FORMOSA","observed",6.73282833120115
+"COMODORO RIVADAVIA","observed",77.844178175629
+"MALARGUE","observed",68.8858429014624
+"PRESIDENTE GENERAL DON OSCAR D GESTIDO","observed",28.0159906437603
+"ROCHA","observed",42.3588163788012
+"SILVIO PETTIROSSI INTL","observed",4.18883311914606
+"POSADAS","observed",6.85538391083553
+"CHACALLUTA","observed",0
+"CORONEL CARLOS CIRIANI SANTA ROSA INTL","observed",0
+"JORGE WILSTERMAN","observed",0
+"CATARATAS DEL IGUAZU","observed",7.73614774972448
+"CATARATAS INTL","observed",6.75394699016045
+"EL ALTO INTL","observed",74.5187826394445
+"LA FLORIDA","observed",49.5292835487735
+"SAN JULIAN","observed",83.1162937535548
+"EL TROMPILLO","observed",0.699978898229269
+"SALGADO FILHO","observed",11.3073883520998
+"RIO GALLEGOS","observed",79.1944677007274
+"TTE AV JORGE HENRICH ARAUZ","observed",0
+"CAMPO GRANDE","observed",0
+"TENIENTE ALEJANDRO VELASCO ASTETE INTL","observed",30.5556005731627
+"PISCO INTL","observed",0
+"LONDRINA 2","observed",0.980513210749207
+"CARLOS IBANEZ DEL CAMPO INTL","observed",79.6207548092111
+"SAN LUIS","observed",40.1837638640366
+"HERCILIO LUZ","observed",1.04210471297264
+"AFONSO PENA","observed",13.2172022084883
+"RIO GRANDE 2","observed",71.1556998436467
+"JORGE CHAVEZ INTL","observed",0
+"HEROES DEL ACRE","observed",0
+"MARECHAL RONDON","observed",0
+"VIRACOPOS","observed",0
+"CONGONHAS","observed",1.0025967676833
+"CAP FAP DAVID ABENZUR RENGIFO INTL","observed",0
+"CAPITAN CARLOS MARTINEZ DE PINILLOS","observed",0
+"CARRIEL SUR INTL","observed",69.546646644646
+"GALEAO ANTONIO CARLOS JOBIM","observed",0
+"SANTOS DUMONT","observed",0
+"PRESIDENTE JUSCELINO KUBITSCHEK","observed",0
+"CAPT JOSE A  QUINONES GONZALES INTL","observed",0
+"ALFREDO VASQUEZ COBO","observed",0
+"CAPITAN FAP GUILLERMO CONCHA IBERICO","observed",0
+"CORONEL FRANCISCO SECADA VIGNETTA INTL","observed",0
+"GOIABEIRAS","observed",0
+"PONTA PELADA","observed",0
+"EDUARDO GOMES INTL","observed",0
+"VILLA REYNOLDS","observed",40.5995957638163
+"SIMON BOLIVAR INTL","observed",0
+"SANTAREM","observed",0
+"DEPUTADO LUIS EDUARDO MAGALHAES","observed",0
+"ALFONSO BONILLA ARAGON INTL","observed",0
+"BOA VISTA","observed",0
+"ELDORADO INTL","observed",10.5685411640593
+"MATECANA","observed",0
+"VAL DE CANS INTL","observed",0
+"Quillota","observed",49.4439249126295
+"Lliu-Lliu Embalse","observed",50.5859618847175
