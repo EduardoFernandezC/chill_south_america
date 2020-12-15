@@ -10,21 +10,21 @@ require(tmaptools)
 library(ggplot2)
 
 ####interpolation methods were taken from https://mgimond.github.io/Spatial/interpolation-in-r.html
-####also from Luedeling and Benmoussa 2020 but their code looks suspiciously the same as the websites (with fitting coefficients and comments for completely different dataset)
+####also from Luedeling and Benmoussa 2020
 
 
 #read station coordinates with the projected chill (future and historic). Is this safe winter chill?
 stations <- read.csv('data/Lars/all_chill_projections.csv')
 
 #change column name from 'Altitude' to 'Elevation', so that it is coherent
-colnames(stations)[2] <- 'Elevation'
+#colnames(stations)[2] <- 'Elevation'
 
 #set the planar projection mode as a proj4 string code
 #projection method: ESRI:102033: South America Albers Equal Area Conic taken from: https://spatialreference.org/ref/esri/?search=south+america&srtext=Search
 projection_string <- "+proj=aea +lat_1=-5 +lat_2=-42 +lat_0=-32 +lon_0=-60 +x_0=0 +y_0=0 +ellps=aust_SA +units=m +no_defs"
 
 #change stations to spatial format with original projection
-Porig<-SpatialPointsDataFrame(stations[,c("Longitude","Latitude")],
+Porig<-SpatialPointsDataFrame(stations[, c("Longitude","Latitude")],
                               proj4string=CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"),
                               data=stations)
 
@@ -110,6 +110,7 @@ var.smpl <- variogram(f.1, P)
 # to fit.variogram() via the vgm() function.
 dat.fit  <- fit.variogram(var.smpl, fit.ranges = TRUE, fit.sills = FALSE,
                           vgm(psill=300, model="Sph", range=150000, nugget=25))
+
 #range decides at which point on the x-axis the function plateaus, psill does the same for the y-axis
 #'Sph' decides on the shape of the function
 
