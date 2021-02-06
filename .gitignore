@@ -45,5 +45,8 @@ data/*.rar
 # csv data files
 data/future_temps/
 
+# manuscript
+manuscript/
+
 # desktop.ini
 desktop.ini

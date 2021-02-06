@@ -49,7 +49,7 @@ for (i in 1 : length(All_WS_90$Name)){
   All_WS_90 <- All_WS_90[order(All_WS_90$distance), ]
 
 
-  # Fill the gaps using data from the 30 closest weather stations
+  # Fill the gaps using data from the 40 closest weather stations
 
   All_patched[[i]] <- patch_daily_temperatures2(All_data_90[[i]], All_data_90[All_WS_90[(2 : 41), "Name"]], 
                                                 max_mean_bias = 4, max_stdev_bias = 4)
