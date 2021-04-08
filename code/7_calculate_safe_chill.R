@@ -108,4 +108,5 @@ future_sim_chill <- dcast(future_sim_chill, station_name ~ rcp + year + variable
 intermediate <- merge.data.frame(stations, hist_sim_chill, by = 'station_name')
 all_proejctions <- merge.data.frame(intermediate, future_sim_chill, by = 'station_name')
 
+#save the chill values to one table. this will be the key for all further scripts
 write.csv(all_proejctions,'../all_chill_projections.csv', row.names = FALSE)
