@@ -70,16 +70,20 @@ P_climate <- extract(Worig,Porig)
 stations$CLIMATE <- P_climate$CLIMATE
 stations$CLIMATE_name <- P_climate$CLIMATE_name
 
+
 #visuallise points were climate assignment did not work and decide by hand
 tm_shape(Worig, bbox = b) + 
   tm_polygons('CLIMATE') + 
   tm_shape(Porig) + tm_dots(size = 0.2)+
-  tm_shape(Porig[c(35,72,81),]) + tm_dots(size = 0.2, col = 'red')+
   tm_legend(legend.outside=TRUE)
 
-stations[35,c('CLIMATE','CLIMATE_name')] <- c(as.factor(9), 'Cool Sub-Tropics (SR)')
-stations[81,c('CLIMATE','CLIMATE_name')] <- c(as.factor(1), 'Warm Tropics')
-stations[72,c('CLIMATE','CLIMATE_name')] <- c(as.factor(13), 'Cool Temperate')
+#correct some mistakes by hand
+stations[2,c('CLIMATE','CLIMATE_name')] <- c(as.factor(15), 'Transitional Moderately\nCool Sub-Tropics (SR)')
+stations[124,c('CLIMATE','CLIMATE_name')] <- c(as.factor(13), 'Cool Temperate')
+stations[1141,c('CLIMATE','CLIMATE_name')] <- c(as.factor(1), 'Warm Tropics')
+stations[35,c('CLIMATE','CLIMATE_name')] <- c(as.factor(11), 'Cool Sub-Tropics\n(Winter Rainfall (WR))')
+stations[81,c('CLIMATE','CLIMATE_name')] <- c(as.factor(7), 'Warm Sub-Tropics\n(Summer Rainfall (SR))')
+stations[72,c('CLIMATE','CLIMATE_name')] <- c(as.factor(11), 'Cool Sub-Tropics\n(Winter Rainfall (WR))')
 library(ggplot2)
 
 ggplot(stations, aes(x = CLIMATE)) +
