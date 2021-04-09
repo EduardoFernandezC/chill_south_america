@@ -1,5 +1,4 @@
 #adjustment model for chill based on mean temperature ("three-phases model")
-#and adjustmend model based on combination of min and max temperature ("3D model)
 
 library(ggplot2)
 library(ggrepel)
