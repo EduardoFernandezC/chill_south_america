@@ -22,27 +22,27 @@ library(cartography) #needed to include structures like stripes to maps
 
 
 #can I replace the Worig with SA?
+SA <- readOGR('data/sa_outline/SA_outline.shp')
 
 
 #read station coordinates with the projected chill (future and historic)
-stations <- read.csv('southamerica_chill/chill_south_america/data/all_chill_projections.csv')
+stations <- read.csv('data/all_chill_projections.csv')
 
 Porig<-SpatialPointsDataFrame(stations[,c("Longitude","Latitude")],
                               proj4string=CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"),
-                              data=stations[,c(2,5:63)])
-
-#read shape file of south america with original projection
-Worig<-readOGR('southamerica_chill/chill_south_america/sa_shapefile/SouthAmerica.shp')
+                              data=stations[,c(2,5:43)])
 
 # Replace point boundary extent with that of South America to make sure the interpolation is done for the whole extend of south america
-Porig@bbox <- Worig@bbox
+Porig@bbox <- SA@bbox
 
+
+#create a polygon of South America which is filled 
 data(World)#for map of south america
 
 countries <- c('FRA','ARG', 'BOL', 'BRA', 'CHL', 'COL', 'ECU',  'GUY', 'PER', 'PRY', 'SUR', 'URY', 'VEN')
-SA <- World[World$iso_a3 %in% countries,]
+SA_countries <- World[World$iso_a3 %in% countries,]
 
-SA_sfc <- hatchedLayer(x= SA,mode = "sfc", pattern = 'right2left', density = 5)
+SA_sfc <- hatchedLayer(x= SA_countries,mode = "sfc", pattern = 'right2left', density = 5)
 #set bounding box for SA
 SA_region = extent(c(-8000000,-3000000,-6700000,1700000))
 SA_sfc <- as_Spatial(SA_sfc) #convert to S4 object
