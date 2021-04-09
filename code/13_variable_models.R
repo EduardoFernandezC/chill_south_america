@@ -1,3 +1,8 @@
+#this code is outdated, it prodcues a ton of figures but I think they are not so great
+#better use a simplified script, which makes all graphs of every lat group in one figure with the help of facet_grid
+
+
+
 #iterates other all variables and creates scatter plots of chill and the variables
 #also splits up the climate stations by latitude, latitude + longitude and by climatic zone
 #saves all pictures to seperate folder
@@ -10,7 +15,7 @@ library(gridExtra)
 library(grid)
 library(ggrepel)
 
-stations <- read.csv('southamerica_chill/chill_south_america/data/all_chill_projections.csv')
+stations <- read.csv('data/all_chill_projections.csv')
 #set climate as a factor
 stations$CLIMATE <- as.factor(stations$CLIMATE)
 
@@ -29,7 +34,7 @@ SA_countries <- borders("world", regions = c("Brazil", "Uruguay", "Argentina", "
 #create map with stations
 sa_map <- ggplot() + SA_countries +  theme_bw() +
   geom_point(aes(Longitude, Latitude), data = stations, col = 'black')+
-  coord_equal(xlim = c(-35, -85))
+  coord_equal(xlim = c(-85, -35))
 
 #function to extract p value of modek
 lmp <- function (modelobject) {
@@ -40,6 +45,7 @@ lmp <- function (modelobject) {
   return(p)
 }
 
+#function to place the plots side to side
 multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
   library(grid)
   
