@@ -42,6 +42,7 @@ data(World)#for map of south america
 countries <- c('FRA','ARG', 'BOL', 'BRA', 'CHL', 'COL', 'ECU',  'GUY', 'PER', 'PRY', 'SUR', 'URY', 'VEN')
 SA_countries <- World[World$iso_a3 %in% countries,]
 
+#this function fills the south america outline with dashes
 SA_sfc <- hatchedLayer(x= SA_countries,mode = "sfc", pattern = 'right2left', density = 5)
 #set bounding box for SA
 SA_region = extent(c(-8000000,-3000000,-6700000,1700000))
@@ -49,6 +50,7 @@ SA_sfc <- as_Spatial(SA_sfc) #convert to S4 object
 SA_sfc <- crop(SA_sfc,SA_region) #crop france out of the selection, because it was needed for french guyana
 SA_test <- spTransform(SA_sfc,CRSobj = crs(Porig))
 
+#test if the dashed area worked
 tm_shape(SA_test)+
   tm_lines(col = "grey50")+
   tm_shape(SA) + 
@@ -59,7 +61,7 @@ tm_shape(SA_test)+
 
 
 # Create an empty grid where n is the total number of cells
-grd <- as.data.frame(spsample(Worig, "regular", n=50000))
+grd <- as.data.frame(spsample(SA, "regular", n=50000))
 names(grd) <- c("Longitude", "Latitude")
 coordinates(grd) <- c("Longitude", "Latitude")
 gridded(grd) <- TRUE # Create SpatialPixel object
@@ -67,11 +69,11 @@ fullgrid(grd) <- TRUE # Create SpatialGrid object
 proj4string(grd) <- proj4string(Porig)
 
 #save scenario names to vector
-scenarions <- colnames(stations)[7:28]
+scenarions <- colnames(stations)[6:27]
 
 #load tmin and tmax map for july
-min_temp_jul <- raster('southamerica_chill/chill_south_america/data/wc2.1_30s_tmin_07.tif')
-max_temp_jul <- raster('southamerica_chill/chill_south_america/data/wc2.1_30s_tmax_07.tif')
+min_temp_jul <- raster('D:/chil/wc2.1_30s_tmin/wc2.1_30s_tmin_07.tif')
+max_temp_jul <- raster('D:/chil/wc2.1_30s_tmax/wc2.1_30s_tmax_07.tif')
 
 #set extent to outline of south america
 bb <- extent(-109.46044, -26.23419, -59.48714, 12.62908)
@@ -84,11 +86,6 @@ max_temp_jul <- crop(max_temp_jul,bb)
 #adjust resolution of temperature map to match the grid of our project
 temp_min.res<-resample(min_temp_jul,raster(grd))
 temp_max.res<-resample(max_temp_jul,raster(grd))
-temp_max.res
-min_temp_jul
-
-
-np.cos(np.radians(abs(boxla)))*(111.1*111.1*1000*1000)
 
 ## produce interpolated layer from both temperature maps of all station locations
 f.temp_min<-as.formula(min_temp_jul ~ Longitude + Latitude)
@@ -114,10 +111,12 @@ dat.fit.temp_max <- fit.variogram(var.smpl.temp_max, fit.ranges = FALSE,
 dat.krg.temp_min <- krige( f.temp_min, Porig, grd, dat.fit.temp_min)
 dat.krg.temp_max <- krige( f.temp_max, Porig, grd, dat.fit.temp_max)
 
+#transform the kriged surface to a raster
 r_krig_min<-raster(dat.krg.temp_min)
-r.m_min <- mask(r_krig_min, Worig)
+#only use the rasters within the boundaries of south america
+r.m_min <- mask(r_krig_min, SA)
 r_krig_max<-raster(dat.krg.temp_max)
-r.m_max <- mask(r_krig_max, Worig)
+r.m_max <- mask(r_krig_max, SA)
 
 #calculate a quality map, where you can see the percent difference of krigged temperature to original temperature
 temp_diff_min <- r.m_min - temp_min.res
@@ -142,118 +141,115 @@ get_chill_correction <-  function(tmin, tmax, lookup = pred){
   }
 }
 
+#create empty list which is used to store chill values
 chill_list <- list()
-scenarions
-#set height and width (cm) of maps
+
+#set height and width (cm) of maps when maps are saved
 height <- 13
 width <- 12
-scenarions
-for(scen in scenarions[1]){
 
-#krig the tmin tmax data on a plane
+for(scen in scenarions){
+  
+  #krig the tmin tmax data on a plane
+  k <- Krig(x=as.matrix(stations_clean[,c("min_temp_jul","max_temp_jul")]),
+          Y=stations_clean[scen])
+  pred <- predictSurface(k)
+  #error <- predictSurfaceSE(k)
+  
+  #adjust row and column name of object
+  colnames(pred$z)<-pred$y
+  rownames(pred$z)<-pred$x
+  #colnames(error$z)<-error$y
+  #rownames(error$z)<-error$x
+  
+  #melt df
+  melted<-melt(pred$z)
+  #melted_error <- melt(error$z)
+  
+  colnames(melted)<-c("min_temp_jul","max_temp_jul","value")
+  #colnames(melted_error)<-c("min_temp_jul","max_temp_jul","value")
+  
+  #plot the grid
+  correction_plane <- ggplot(melted,
+         aes(x=min_temp_jul,y=max_temp_jul,z=value)) +
+    geom_contour_fill(bins=100) +
+    scale_fill_gradientn(colours=alpha(matlab.like(15)),
+                         name=paste("\nSafe Chill Portions\n[CP]",sep=''), trans = 'reverse') +
+    geom_contour(col="black")  +
+    geom_point(data=stations,
+               aes(x=min_temp_jul,y=max_temp_jul,z=NULL),
+               size=0.7) +
+    geom_text_contour(stroke = 0.2,size = 2) +
+   labs(title = scen)+
+    ylab('Maximum Temperature, July [°C]')+
+    xlab('Minimum Temperature, July [°C]')+
+    theme_bw(base_size=12)
+  
+  ggsave(plot = correction_plane,filename = paste('figures/interpolation/correction_plane_',scen,'.jpg',sep=''),
+         height = 10,width = 15, units = 'cm')
+  
+  #save number of rows and cols
+  no_row <- nrow(r.m_min)
+  no_col <- ncol(r.m_min)
+  
+  #transform kriged tmin and tmax to matrix
+  mat_krig_tmin <- matrix(r.m_min, nrow = no_row, ncol = no_col,byrow = T)
+  mat_krig_tmax <- matrix(r.m_max, nrow = no_row, ncol = no_col,byrow = T)
+  mat_real_tmin <- matrix(temp_min.res, nrow = no_row, ncol = no_col,byrow = T)
+  mat_real_tmax <- matrix(temp_max.res, nrow = no_row, ncol = no_col,byrow = T)
+  
+  #transform matrix to vector and bind tmin and tmax
+  t_both <- cbind(as.vector(mat_krig_tmin),as.vector(mat_krig_tmax))
+  t_both_real <- cbind(as.vector(mat_real_tmin),as.vector(mat_real_tmax))
+  
+  #to see how many pixels are outside of the correction range
+  #test <- t_both_real[!is.na(t_both_real[,1]),]
+  #out_test <- sapply(1:nrow(test), function(i) get_chill_correction(test[i,1], test[i,2]))
+  #sum(is.na(out_test)) / length(out_test)
   
   
-k <- Krig(x=as.matrix(stations_clean[,c("min_temp_jul","max_temp_jul")]),
-        Y=stations_clean[scen])
-pred <- predictSurface(k)
-#error <- predictSurfaceSE(k)
+  #extract the model chill for real and kriged tmin and tmax
+  model_krigged_temp <- sapply(1:nrow(t_both), function(i) get_chill_correction(t_both[i,1], t_both[i,2]))
+  model_real_temp <- sapply(1:nrow(t_both_real), function(i) get_chill_correction(t_both_real[i,1], t_both_real[i,2]))
+  
+  #test_corr_df <- data.frame('min_temp_jul' = as.vector(mat_real_tmin),'max_temp_jul' = as.vector(mat_real_tmax))
+  
+  #see where the datapoints are in the correction plane
+  #ggplot(melted,
+  #       aes(x=min_temp_jul,y=max_temp_jul,z=value)) +
+  #  geom_contour_fill(bins=100) +
+  #  scale_fill_gradientn(colours=alpha(matlab.like(15)),
+  #                       name="Safe Chill Units", trans = 'reverse') +
+  #  geom_contour(col="black")  +
+  #  geom_text_contour(stroke = 0.2) +
+  #  geom_point(data=test_corr_df,
+  #             aes(x=min_temp_jul,y=max_temp_jul,z=NULL),
+  #             size=0.7, alpha = 0.2) +
+  #  theme_bw(base_size=15)
+  #--> many points outside the range of the correction plane
+  
+  #calculate the adjustment (so the chill, which so far was not capured by krigging)
+  #problem: model_real_temp contains many NA
+  model_adjust <- model_real_temp - model_krigged_temp
+  
+  model_adjust <- matrix(model_adjust,nrow = no_row, ncol = no_col)
+  #model_orig <- matrix(model_real_temp,nrow = no_row, ncol = no_col)
+  #model_krig <- matrix(model_krigged_temp,nrow = no_row, ncol = no_col)
+  #exlcude adjustments which would decrease the chill
+  
+  #how can I transform the matrix back to a grid?
+  raster_model_adjust <- raster(model_adjust)
+  raster_model_adjust <- setExtent(raster_model_adjust,bb)
+  crs(raster_model_adjust) <- crs(r.m_min)
+  
+  #raster_model_orig <- raster(model_orig)
+  #raster_model_orig <- setExtent(raster_model_orig,bb)
+  #crs(raster_model_orig) <- crs(r.m_min)
+  
+  #raster_model_krig <- raster(model_krig)
+  #raster_model_krig <- setExtent(raster_model_krig,bb)
+  #crs(raster_model_krig) <- crs(r.m_min)
 
-#adjust row and column name of object
-colnames(pred$z)<-pred$y
-rownames(pred$z)<-pred$x
-#colnames(error$z)<-error$y
-#rownames(error$z)<-error$x
-
-#melt df
-melted<-melt(pred$z)
-#melted_error <- melt(error$z)
-
-colnames(melted)<-c("min_temp_jul","max_temp_jul","value")
-#colnames(melted_error)<-c("min_temp_jul","max_temp_jul","value")
-
-#plot the grid
-correction_plane <- ggplot(melted,
-       aes(x=min_temp_jul,y=max_temp_jul,z=value)) +
-  geom_contour_fill(bins=100) +
-  scale_fill_gradientn(colours=alpha(matlab.like(15)),
-                       name=paste("\nSafe Chill Portions\n[CP]",sep=''), trans = 'reverse') +
-  geom_contour(col="black")  +
-  geom_point(data=stations,
-             aes(x=min_temp_jul,y=max_temp_jul,z=NULL),
-             size=0.7) +
-  geom_text_contour(stroke = 0.2) +
- labs(title = scen)+
-  ylab('Maximum Temperature, July [°C]')+
-  xlab('Minimum Temperature, July [°C]')+
-  theme_bw(base_size=12)
-correction_plane
-
-#ggsave(plot = correction_plane,filename = paste('chill_maps/correction_plane_',scen,'.jpg',sep=''),
-#       height = 10,width = 15, units = 'cm')
-
-#save number of rows and cols
-no_row <- nrow(r.m_min)
-no_col <- ncol(r.m_min)
-
-#transform kriged tmin and tmax to matrix
-mat_krig_tmin <- matrix(r.m_min, nrow = no_row, ncol = no_col,byrow = T)
-mat_krig_tmax <- matrix(r.m_max, nrow = no_row, ncol = no_col,byrow = T)
-mat_real_tmin <- matrix(temp_min.res, nrow = no_row, ncol = no_col,byrow = T)
-mat_real_tmax <- matrix(temp_max.res, nrow = no_row, ncol = no_col,byrow = T)
-
-#transform matrix to vector and bind tmin and tmax
-t_both <- cbind(as.vector(mat_krig_tmin),as.vector(mat_krig_tmax))
-t_both_real <- cbind(as.vector(mat_real_tmin),as.vector(mat_real_tmax))
-
-test <- t_both_real[!is.na(t_both_real[,1]),]
-out_test <- sapply(1:nrow(test), function(i) get_chill_correction(test[i,1], test[i,2]))
-sum(is.na(out_test)) / length(out_test)
-
-
-#extract the model chill for real and kriged tmin and tmax
-model_krigged_temp <- sapply(1:nrow(t_both), function(i) get_chill_correction(t_both[i,1], t_both[i,2]))
-model_real_temp <- sapply(1:nrow(t_both_real), function(i) get_chill_correction(t_both_real[i,1], t_both_real[i,2]))
-
-#test_corr_df <- data.frame('min_temp_jul' = as.vector(mat_real_tmin),'max_temp_jul' = as.vector(mat_real_tmax))
-
-#see where the datapoints are in the correction plane
-#ggplot(melted,
-#       aes(x=min_temp_jul,y=max_temp_jul,z=value)) +
-#  geom_contour_fill(bins=100) +
-#  scale_fill_gradientn(colours=alpha(matlab.like(15)),
-#                       name="Safe Chill Units", trans = 'reverse') +
-#  geom_contour(col="black")  +
-#  geom_text_contour(stroke = 0.2) +
-#  geom_point(data=test_corr_df,
-#             aes(x=min_temp_jul,y=max_temp_jul,z=NULL),
-#             size=0.7, alpha = 0.2) +
-#  theme_bw(base_size=15)
-#--> many points outside the range of the correction plane
-
-#calculate the adjustment (so the chill, which so far was not capured by krigging)
-#problem: model_real_temp contains many NA
-model_adjust <- model_real_temp - model_krigged_temp
-
-model_adjust <- matrix(model_adjust,nrow = no_row, ncol = no_col)
-#model_orig <- matrix(model_real_temp,nrow = no_row, ncol = no_col)
-#model_krig <- matrix(model_krigged_temp,nrow = no_row, ncol = no_col)
-#exlcude adjustments which would decrease the chill
-
-#how can I transform the matrix back to a grid?
-raster_model_adjust <- raster(model_adjust)
-raster_model_adjust <- setExtent(raster_model_adjust,bb)
-crs(raster_model_adjust) <- crs(r.m_min)
-
-#raster_model_orig <- raster(model_orig)
-#raster_model_orig <- setExtent(raster_model_orig,bb)
-#crs(raster_model_orig) <- crs(r.m_min)
-
-#raster_model_krig <- raster(model_krig)
-#raster_model_krig <- setExtent(raster_model_krig,bb)
-#crs(raster_model_krig) <- crs(r.m_min)
-
-
-#chose which data is used for the interpolation (this is where later on the loop is set)
 
   #do interpolation of chill
   # Define the krigging model for the chill
@@ -278,7 +274,7 @@ crs(raster_model_adjust) <- crs(r.m_min)
   
   #assign krigged data to the raster
   r_krig<-raster(dat.krg.chil)
-  r.m.chill <- mask(r_krig, Worig)
+  r.m.chill <- mask(r_krig, SA)
   r.m.chill<-max(r.m.chill,0)
   
   raster_model_adjust <- setExtent(raster_model_adjust, extent(r.m.chill)) 
@@ -288,12 +284,12 @@ crs(raster_model_adjust) <- crs(r.m_min)
   
   #adjust the chill portions, prevent that chill portions become lower than zero
   r<-max(r.m.chill+raster_model_adjust,0)
-  r.m <- mask(r, Worig)
+  r.m <- mask(r, SA)
   
   chill_list <- append(chill_list,r.m)
   
 
-  f_name <- paste('chill_maps/adjusted_chill_',scen,'.jpg',sep = '')
+  f_name <- paste('figures/interpolation/adjusted_chill_',scen,'.jpg',sep = '')
   
   chill_map <- tm_shape(SA_test)+
     tm_lines(col='grey')+
@@ -309,16 +305,16 @@ crs(raster_model_adjust) <- crs(r.m_min)
     tm_scale_bar(position = c(0.58,0.01),bg.color = 'white')+
     tm_layout(legend.outside=T,outer.margins = c(0.001,0.001,0,0.001))
   chill_map
-  #tmap_save(chill_map, filename = f_name,height = height,width=width,units = 'cm')  
+  tmap_save(chill_map, filename = f_name,height = height,width=width,units = 'cm')  
   
   new_seq <- seq(-50,90,by=10)
-  f_name <- paste('chill_maps/chill_correction_',scen,'.jpg',sep = '')
+  f_name <- paste('figures/interpolation/chill_correction_',scen,'.jpg',sep = '')
   chill_correction <- tm_shape(SA_test) +
     tm_lines(col = "grey50") +
     tm_shape(raster_model_adjust)+
     tm_raster(palette=get_brewer_pal("RdBu", contrast = c(0, 0.75)),
               midpoint = 0,title=paste(scen,"\nCorrection of\nwinter chill (Chill Portions)",sep = ''),
-              breaks = new_seq,legend.hist = T)+
+              breaks = new_seq)+
     tm_shape(Porig) + tm_symbols(size=0.2,shape = 4,col = 'black')+
     tm_shape(SA)+
     tm_borders(col='black')+
@@ -327,29 +323,21 @@ crs(raster_model_adjust) <- crs(r.m_min)
     tm_scale_bar(position = c(0.58,0.01),bg.color = 'white')+
     tm_layout(legend.outside=T,outer.margins = c(0.001,0.001,0,0.001))
   chill_correction
-  #tmap_save(chill_correction, filename = f_name,height = height,width=width,units = 'cm')  
-}
+  tmap_save(chill_correction, filename = f_name,height = height,width=width,units = 'cm')  
+} #end of loop to create interpolation maps
 
-#compare 1981 with 2017
+#########################
+###compute change chill map
+#########################
+
+#change names in list to scneario names
 names(chill_list) <- scenarions
 
-change_chill <- chill_list[['X2017']]-chill_list[['X1981']]
-change_chill <- as.data.frame(change_chill)
-change_chill <- na.omit(change_chill)
 
-ggplot(change_chill,aes(x=layer))+geom_histogram(bins = 15)+
-  xlab('Difference in safe chill (2017 - 1981) [CP]')+
-  coord_cartesian(xlim = c(-20,10))+
-  theme_bw()
-ggsave('chill_maps/hist_chill_diff_1981_2017.jpg')
-round(sum(abs(change_chill) <= 2) / length(change_chill$layer)*100,digits = 1)
-round(sum(change_chill < -2) / length(change_chill$layer)*100,digits = 1)
-round(sum(change_chill > 2) / length(change_chill$layer)*100,digits = 1)
-
-
+#loop for change 2017 to future scenarios
 for(scen in scenarions[11:22]){
   #create file name
-  f_name <- paste('chill_maps/change_2017_',scen,'.jpg',sep = '')
+  f_name <- paste('figures/interpolation/change_2017_',scen,'.jpg',sep = '')
   
   #split scenario name because so long
   x <- strsplit(scen,split = '_')
@@ -371,8 +359,10 @@ for(scen in scenarions[11:22]){
   tmap_save(change_map, filename = f_name,height = height,width=width,units = 'cm')  
   
 }
+
+#calculate change 1981 to 2017
 scen <- scenarions[1]
-f_name <- paste('chill_maps/change_2017_',scen,'.jpg',sep = '')
+f_name <- paste('figures/interpolation/change_2017_',scen,'.jpg',sep = '')
 
 #split scenario name because so long
 x <- strsplit(scen,split = '_')
@@ -394,21 +384,31 @@ tmap_save(change_map, filename = f_name,height = height,width=width,units = 'cm'
 
 
 
+############
+#create table with absolute and change in chill
+############
+
 #create data frame with frequencies of absolute CP
 #create data frame with frequencies of change in chill
 
-
+#empty data frame
 absolute_chill_df <- data.frame(NULL)
 
+#loop other every entry of the list
 for(i in 1:length(chill_list)){
+  #subset data frame and remove NAs
   sub_df <- na.omit(as.data.frame(chill_list[[i]])) 
+  #create bins of chill
   out <- table(cut(sub_df$layer,breaks = seq(0,120,by=15),include.lowest = T))
+  #save binned chill to data frame
   absolute_chill_df <- rbind(absolute_chill_df,out)
   
 }
+#add names to the dataframe 
 absolute_chill_df <- cbind(names(chill_list),absolute_chill_df)
 names(absolute_chill_df) <- c('year',names(out))      
-write.csv(absolute_chill_df,'southamerica_chill/chill_south_america/data/absolute_chill_groups2.csv',
+#save the table
+write.csv(absolute_chill_df,'data/absolute_chill_binned.csv',
           row.names = F)   
 
 #create the same for change in chill
@@ -434,109 +434,5 @@ for(i in 1:length(change_chill_list)){
 change_chill_df <- cbind(names(change_chill_list),change_chill_df)
 names(change_chill_df) <- c('year',names(out))      
 
-write.csv(change_chill_df,'southamerica_chill/chill_south_america/data/change_chill_groups.csv',
+write.csv(change_chill_df,'data/change_chill_binned.csv',
           row.names = F)
-
-stations_chill <- stations[,c(1,2,7:28)]
-stations_chill_melt <- melt(stations_chill,id.vars = c('Name','CTRY'))
-
-stations_chill_melt$rcp <- NA
-stations_chill_melt$year <- NA
-stations_chill_melt$scenario <- NA
-
-#filter the right rows for year, rcp and scenarion to be added in the column
-stations_chill_melt[grepl('opti',stations_chill_melt$variable),'scenario'] <- 'optimistic'
-stations_chill_melt[grepl('pessi',stations_chill_melt$variable),'scenario'] <- 'pessimistic'
-stations_chill_melt[grepl('intermed',stations_chill_melt$variable),'scenario'] <- 'intermediate'
-stations_chill_melt[grepl('2085',stations_chill_melt$variable),'year'] <- 2085
-stations_chill_melt[grepl('2050',stations_chill_melt$variable),'year'] <- 2050
-stations_chill_melt[grepl('1981',stations_chill_melt$variable),'year'] <- 1981
-stations_chill_melt[grepl('1985',stations_chill_melt$variable),'year'] <- 1985
-stations_chill_melt[grepl('1989',stations_chill_melt$variable),'year'] <- 1989
-stations_chill_melt[grepl('1993',stations_chill_melt$variable),'year'] <- 1993
-stations_chill_melt[grepl('1997',stations_chill_melt$variable),'year'] <- 1997
-stations_chill_melt[grepl('2001',stations_chill_melt$variable),'year'] <- 2001
-stations_chill_melt[grepl('2005',stations_chill_melt$variable),'year'] <- 2005
-stations_chill_melt[grepl('2009',stations_chill_melt$variable),'year'] <- 2009
-stations_chill_melt[grepl('2013',stations_chill_melt$variable),'year'] <- 2013
-stations_chill_melt[grepl('2017',stations_chill_melt$variable),'year'] <- 2017
-stations_chill_melt[grepl('rcp45',stations_chill_melt$variable),'rcp'] <- 'rcp45'
-stations_chill_melt[grepl('rcp85',stations_chill_melt$variable),'rcp'] <- 'rcp85'
-stations_chill_melt[is.na(stations_chill_melt$scenario),]$scenario <- 'observed'
-stations_chill_melt$scenario <- factor(stations_chill_melt$scenario,levels = c('observed','optimistic','intermediate','pessimistic'))
-
-name <- levels(stations$Name)[1] 
-
-#cycle through all station names
-for(name in levels(stations$Name)){
-  #subset the data frame
-  sub_df <- subset(stations_chill_melt,stations_chill_melt$Name == name)
-  #add the historic years twice so they can be labbeled with both rcps
-  sub_df <- rbind(sub_df,sub_df[1:10,])
-  #label both historic time spans
-  sub_df$rcp[1:10] <- 'rcp45'
-  sub_df$rcp[23:32] <- 'rcp85'
-  #add year 2017 six times, so that each of them can get a scenario, so that the line plot connects
-  sub_df <- rbind(sub_df,sub_df[10,],sub_df[10,],sub_df[10,],sub_df[32,],sub_df[32,],sub_df[32,])
-  #change rownames because they are ugly
-  rownames(sub_df) <- 1:length(sub_df$Name)
-  #add the scenarios to the duplicates of 2017
-  sub_df[33:38,]$scenario <- rep(c('optimistic','intermediate','pessimistic'),2)
-  
-  #get upper and lower values to shade the area between future scenarios
-  extremes <- aggregate(sub_df$value, by=list(sub_df$rcp,sub_df$year),FUN = max)
-  lower <- aggregate(sub_df$value, by=list(sub_df$rcp,sub_df$year),FUN = min)
-  extremes$lower <- lower$x
-  names(extremes)[1:3] <- c('rcp','year','upper')
-  
-  country <- sub_df$CTRY[1]
-  #do the plotting
-  p<- ggplot()+
-    geom_ribbon(data = extremes, aes(ymax = upper,ymin = lower,x=year),col='grey',alpha= 0.2,)+
-    geom_point(data = sub_df,aes(x=year, y=value,col = scenario),size=2)+
-    geom_line(data = sub_df,aes(x=year, y=value,col = scenario),size = 1.2)+
-    scale_color_manual(breaks = c("observed", "optimistic", "intermediate", "pessimistic"), 
-                       values=c('black',"#4DAF4A","#377EB8","#E41A1C"))+
-    labs(y='Safe Chill Portions [CP]',x='Year')+
-    ggtitle(paste(name,' [',country,']',sep = ''))+
-    ylim(0,100)+
-    facet_grid(~rcp)+
-    theme_bw()+
-    theme(legend.position = "none")
-  ggsave(p,filename =  paste('change_chill_station_2/',name,'.jpg',sep=''),
-         height = 10, width = 10, units = 'cm')
-  
-}
-name <- 'COMODORO RIVADAVIA'
-test <- stations_chill_melt %>%
-  filter(Name == 'COMODORO RIVADAVIA')
-  
-test <- rbind(test,test[1:10,])
-test$rcp[1:10] <- 'rcp45'
-test$rcp[23:32] <- 'rcp85'
-test <- rbind(test,test[10,],test[10,],test[10,],test[32,],test[32,],test[32,])
-rownames(test) <- 1:length(test$Name)
-test[33:38,]$scenario <- rep(c('optimistic','intermediate','pessimistic'),2)
-
-extremes <- test %>%
-  filter(scenario != 'observed', year >= 2017)%>%
-  group_by(rcp,year)%>%
-  summarise(mini = min(value),maxi = max(value))
-
-extremes <- aggregate(test1$value, by=list(test1$rcp,test1$year),FUN = max)
-lower <- aggregate(test1$value, by=list(test1$rcp,test1$year),FUN = min)
-extremes$lower <- lower$x
-names(extremes)[1:3] <- c('rcp','year','upper')
-
-ggplot()+
-  geom_ribbon(data = extremes, aes(ymax = upper,ymin = lower,x=year),col='grey',alpha= 0.2,)+
-  geom_point(data = test,aes(x=year, y=value,col = scenario),size=2)+
-  geom_line(data = test,aes(x=year, y=value,col = scenario),size = 1.2)+
-  scale_color_manual(breaks = c("observed", "optimistic", "intermediate", "pessimistic"), 
-                    values=c('black',"#4DAF4A","#377EB8","#E41A1C"))+
-labs(y='Safe Chill Portions [CP]',x='Year')+
-  ggtitle(name)+
- facet_grid(~rcp)+
-  theme_bw()
-ggsave(p,filename =  paste('change_chill_station/',name,'.jpg',sep=''))
-
