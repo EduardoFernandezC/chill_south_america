@@ -314,7 +314,7 @@ orig_krig_chill <- tm_shape(r.m.chill)+
   tm_raster(palette=get_brewer_pal("RdBu", contrast = c(0, 0.75)),
             midpoint = 30,title=paste(scen,"\nSafe Winter Chill \n(Chill Portions)\nUncorrected",sep = ''),
             breaks=seq(0,100,by=10))+
-  tm_shape(Porig) + tm_dots(size=0.2)+
+  tm_shape(Porig) + tm_dots(size=0.2,shape = 4,col = 'black')+
   tm_shape(SA)+
   tm_borders()+
   tm_graticules(lines =F)+
