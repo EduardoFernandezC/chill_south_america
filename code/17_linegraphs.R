@@ -8,10 +8,10 @@ library(ggplot2) #plotting
 stations <- read.csv('data/all_chill_projections.csv')
 
 #drop all columns which are not needed
-stations <- stations[,c(1,5:27)]
+stations <- stations[, c(1, 5 : 28)]
 
 #melt data frame
-stations_melt <- melt(stations,id.vars = c('station_name','CTRY'))
+stations_melt <- melt(stations, id.vars = c('station_name', 'CTRY'))
 
 #add columns to the dataframe, because the RCP, year and type of model output (optimisitic etc.) 
 #need to be individually indicated. but sofar it is only as combined infor in the variable column, so the string
@@ -24,6 +24,7 @@ stations_melt$scenario <- NA
 stations_melt[grepl('opti',stations_melt$variable),'scenario'] <- 'optimistic'
 stations_melt[grepl('pessi',stations_melt$variable),'scenario'] <- 'pessimistic'
 stations_melt[grepl('intermed',stations_melt$variable),'scenario'] <- 'intermediate'
+stations_melt[grepl('observed',stations_melt$variable),'year'] <- 1998.5
 stations_melt[grepl('2085',stations_melt$variable),'year'] <- 2085
 stations_melt[grepl('2050',stations_melt$variable),'year'] <- 2050
 stations_melt[grepl('1981',stations_melt$variable),'year'] <- 1981
@@ -39,9 +40,9 @@ stations_melt[grepl('2017',stations_melt$variable),'year'] <- 2017
 stations_melt[grepl('rcp45',stations_melt$variable),'rcp'] <- 'rcp45'
 stations_melt[grepl('rcp85',stations_melt$variable),'rcp'] <- 'rcp85'
 #add 'observed' to scenearios column of years 1981 - 2017 so they can be differentiated in the plot
-stations_melt[is.na(stations_melt$scenario),]$scenario <- 'observed'
+stations_melt[is.na(stations_melt$scenario),]$scenario <- 'historic'
 #change order of scenarios so it looks prettier in the plot
-stations_melt$scenario <- factor(stations_melt$scenario,levels = c('observed','optimistic','intermediate','pessimistic'))
+stations_melt$scenario <- factor(stations_melt$scenario,levels = c('historic','optimistic','intermediate','pessimistic'))
 
 #make names to factor, so it is done in alphabetical order
 stations$station_name <- as.factor(stations$station_name)
@@ -64,16 +65,20 @@ for(name in levels(stations$station_name)){
   #subset the data frame
   sub_df <- subset(stations_melt,stations_melt$station_name == name)
   #add the historic years twice so they can be labbeled with both rcps
-  sub_df <- rbind(sub_df,sub_df[1:10,])
+  sub_df <- rbind(sub_df, sub_df[1:11, ])
   #label both historic time spans
-  sub_df$rcp[1:10] <- 'rcp45'
-  sub_df$rcp[23:32] <- 'rcp85'
+  sub_df$rcp[1:11] <- 'rcp45'
+  sub_df$rcp[23:34] <- 'rcp85'
   #add year 2017 six times, so that each of them can get a scenario, so that the line plot connects
-  sub_df <- rbind(sub_df,sub_df[10,],sub_df[10,],sub_df[10,],sub_df[32,],sub_df[32,],sub_df[32,])
+  sub_df <- rbind(sub_df,sub_df[11,],sub_df[11,],sub_df[11,],sub_df[34,],sub_df[34,],sub_df[34,])
   #change rownames because they are ugly
   rownames(sub_df) <- 1:length(sub_df$station_name)
   #add the scenarios to the duplicates of 2017
-  sub_df[33:38,]$scenario <- rep(c('optimistic','intermediate','pessimistic'),2)
+  sub_df[35:40,]$scenario <- rep(c('optimistic','intermediate','pessimistic'),2)
+  
+  # Extract the observed rows
+  obs <- sub_df[sub_df$variable == "observed_SWC", ]
+  sub_df <- sub_df[sub_df$variable != "observed_SWC", ]
   
   #get upper and lower values to shade the area between future scenarios
   extremes <- aggregate(sub_df$value, by=list(sub_df$rcp,sub_df$year),FUN = max)
@@ -86,17 +91,19 @@ for(name in levels(stations$station_name)){
   #do the plotting
   p<- ggplot()+
     geom_ribbon(data = extremes, aes(ymax = upper,ymin = lower,x=year),col='grey',alpha= 0.2,)+
-    geom_point(data = sub_df,aes(x=year, y=value,col = scenario),size=2)+
-    geom_line(data = sub_df,aes(x=year, y=value,col = scenario),size = 1.2)+
-    scale_color_manual(breaks = c("observed", "optimistic", "intermediate", "pessimistic"), 
+    geom_point(data = sub_df,aes(x=year, y=value,col = scenario),size=1.5)+
+    geom_line(data = sub_df,aes(x=year, y=value,col = scenario),size = 1)+
+    geom_point(data = obs,aes(x=year, y=value,col = scenario),size=3, color = "grey40", shape = 8)+
+    scale_color_manual(breaks = c("historic", "optimistic", "intermediate", "pessimistic"), 
                        values=c('black',"#4DAF4A","#377EB8","#E41A1C"))+
-    labs(y='Safe Chill Portions [CP]',x='Year')+
-    ggtitle(paste(name,' [',country,']',sep = ''))+
+    labs(y='Safe winter chill [Chill Portions]', x = 'Year')+
+    ggtitle(paste(name,' [',country,']', sep = ''))+
     ylim(0,100)+
-    facet_grid(~rcp)+
+    facet_grid(~ factor(rcp, labels = c("RCP4.5", "RCP8.5"))) +
     theme_bw()+
     theme(legend.position = "none")
-  ggsave(p,filename =  paste('figures/line_plots/',name,'.jpg',sep=''),
+  #p
+  ggsave(p, filename =  paste('figures/line_plots/', name, '.jpg', sep = ''),
          height = 10, width = 10, units = 'cm')
   
 }
