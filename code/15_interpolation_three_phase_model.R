@@ -20,7 +20,7 @@ stations <- read.csv('data/all_chill_projections.csv')
 
 Porig<-SpatialPointsDataFrame(stations[,c("Longitude","Latitude")],
                               proj4string=CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"),
-                              data=stations[,c(2,5:43)])
+                              data=stations[,c(2, 5 : ncol(stations))])
 
 
 #read shape file of south america with original projection
@@ -38,7 +38,7 @@ fullgrid(grd) <- TRUE # Create SpatialGrid object
 proj4string(grd) <- proj4string(Porig)
 
 #save scenario names to vector
-scenarions <- colnames(stations)[6:27]
+scenarions <- colnames(stations)[6:28]
 
 #chose which data is used for the interpolation (this is where later on the loop is set)
 scen <- scenarions[1]
@@ -48,7 +48,7 @@ scen <- scenarions[1]
 
 #read original mean temp in august file
 #same file like in script 10
-avg_temp_jul <- raster('D:/chil/wc2.1_30s_tavg/wc2.1_30s_tavg_07.tif')
+avg_temp_jul <- raster('data/world_clim/wc2/wc2.1_30s_tavg_07.tif')
 
 #set extent to outline of south america
 bb <- extent(-109.46044, -26.23419, -59.48714, 12.62908)
@@ -102,8 +102,9 @@ width <- 12
 org_temp <- tm_shape(SA) +
   tm_fill()+
   tm_shape(temp.res)+
-  tm_raster(n=7, midpoint = 10,palette=get_brewer_pal("-RdBu", n = 9, contrast = c(0, 0.75)),
-            breaks = seq(-15,35,by=5),title="Original Mean Temperature\n in July (°C)")+
+  tm_raster(n = 7, midpoint = 10, palette = get_brewer_pal("-RdBu", n = 9, contrast = c(0, 0.75)),
+            style = "cont", breaks = seq(-15, 35, by = 5),
+            title = "Original Mean Temperature\n in July (°C)") +
   tm_shape(Porig) + tm_symbols(size=0.2,shape = 4,col = 'black')+
   tm_shape(SA)+
   tm_borders(col='black')+
@@ -112,7 +113,8 @@ org_temp <- tm_shape(SA) +
   tm_scale_bar(position = c(0.58,0.01),bg.color = 'white')+
   tm_layout(legend.outside=T,outer.margins = c(0.001,0.001,0,0.001))
 org_temp
-tmap_save(org_temp, filename = 'figures/interpolation/original_tavg_jul.jpg',height = height,width=width,units = 'cm')  
+tmap_save(org_temp, filename = 'figures/interpolation/original_tavg_jul.jpg',
+          height = height, width = width, units = 'cm')  
 
 
 #plot krigged temperature
@@ -120,7 +122,8 @@ krig_temp <- tm_shape(SA) +
   tm_fill()+  
   tm_shape(r.m)+
   tm_raster(midpoint = 10,palette=get_brewer_pal("-RdBu", n = 9, contrast = c(0, 0.75)),
-            breaks = seq(-15,35,by=5),title="Krigged Mean Temperature\nin July (°C)")+
+            breaks = seq(-15,35,by=5),title="Krigged Mean Temperature\nin July (°C)",
+            style = "cont")+
   tm_shape(Porig) + tm_symbols(size=0.2,shape = 4,col = 'black')+
   tm_shape(SA)+
   tm_borders(col='black')+
@@ -129,7 +132,8 @@ krig_temp <- tm_shape(SA) +
   tm_scale_bar(position = c(0.58,0.01),bg.color = 'white')+
   tm_layout(legend.outside=T,outer.margins = c(0.001,0.001,0,0.001))
 krig_temp
-tmap_save(krig_temp, filename = 'figures/interpolation/krig_tavg_jul.jpg',height = height,width=width,units = 'cm')  
+tmap_save(krig_temp, filename = 'figures/interpolation/krig_tavg_jul.jpg',
+          height = height, width = width, units = 'cm')  
 
 #tmaptools::palette_explorer()
 
@@ -140,7 +144,7 @@ temp_dif <-tm_shape(SA) +
   tm_shape(temp_diff)+
   tm_raster(palette=get_brewer_pal("-RdBu", n = 9, contrast = c(0, 0.75)),
             midpoint = 0,title="Error\nkrig.-orig.(°C)",
-            breaks = c(seq(-10,14,by=4),20))+
+            breaks = c(seq(-10,14,by=4),20), style = "cont")+
   tm_shape(Porig) + tm_symbols(size=0.2,shape = 4,col = 'black')+
   tm_shape(SA)+
   tm_borders(col='black')+
@@ -181,7 +185,7 @@ model_up <- lm(data = up, X1981~avg_temp_jul)
 #input: set breaks, the models and the temperature map as a grid
 #output: modelled chill as a matrix!
 
-calc_model_val <- function(x,upper_break, lower_break, model_low, model_mid){
+calc_model_val <- function(x, upper_break, lower_break, model_low, model_mid){
   #at first, check if the raster value is nan or na, if so return the same
   if(is.na(x) == T){
     return(NA)
@@ -209,7 +213,7 @@ calc_model_val(x=NaN,upper_break = upper_break, lower_break = lower_break,
 
 #test function on a matrix
 my.matrx <- matrix(c(1:5, 6:10, 11:15, 16:20), nrow = 5, ncol = 4)
-my_res <- apply(my.matrx,1:2, calc_model_val, upper_break, lower_break, model_low, model_mid)
+my_res <- apply(my.matrx, 1 : 2, calc_model_val, upper_break, lower_break, model_low, model_mid)
 
 #save number of rows and columns, so that the gridded data is presented correctly as a matrix
 no_row <- nrow(r.m)
@@ -236,7 +240,7 @@ tm_shape(raster_model_adjust)+
   tm_borders()
 
 #something is wrong here. the adjustment layer looks completely distorted
-temp_dif <- tm_shape(SA)+
+chill_adjust <- tm_shape(SA)+
   tm_fill()+
   tm_shape(raster_model_adjust)+
   tm_raster(n=10, palette=get_brewer_pal("RdBu", contrast = c(0, 0.75)),
@@ -291,7 +295,9 @@ final_chill <- tm_shape(r.m)+
   tm_compass(position = c(0.64,0.1))+
   tm_scale_bar(position = c(0.58,0.01),bg.color = 'white')+
   tm_layout(legend.outside=T,outer.margins = c(0.001,0.001,0,0.001))
-tmap_save(final_chill, filename = 'figures/interpolation/adjusted_chill_three_phases_1981.jpg',height = height,width=width,units = 'cm')  
+
+tmap_save(final_chill, filename = paste0('figures/interpolation/adjusted_chill_three_phases_', scen, '.jpg'),
+          height = height,width=width,units = 'cm')  
 
 
 #have a look at the region with high density of stations
@@ -313,7 +319,7 @@ tm_shape(r.m,bbox = b)+
 orig_krig_chill <- tm_shape(r.m.chill)+
   tm_raster(palette=get_brewer_pal("RdBu", contrast = c(0, 0.75)),
             midpoint = 30,title=paste(scen,"\nSafe Winter Chill \n(Chill Portions)\nUncorrected",sep = ''),
-            breaks=seq(0,100,by=10))+
+            breaks=seq(0,100,by=10), style = "cont")+
   tm_shape(Porig) + tm_dots(size=0.2,shape = 4,col = 'black')+
   tm_shape(SA)+
   tm_borders()+
@@ -322,6 +328,9 @@ orig_krig_chill <- tm_shape(r.m.chill)+
   tm_scale_bar(position = c(0.58,0.01),bg.color = 'white')+
   tm_layout(legend.outside=T,outer.margins = c(0.001,0.001,0,0.001))
 orig_krig_chill
-tmap_save(orig_krig_chill, filename = 'figures/interpolation/chill_kriged_uncorrected_1981.jpg',height = height,width=width,units = 'cm')  
+
+tmap_save(orig_krig_chill,
+          filename = paste0('figures/interpolation/chill_kriged_uncorrected_', scen, '.jpg'),
+          height = height,width=width,units = 'cm')  
 
 
