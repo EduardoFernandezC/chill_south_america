@@ -51,3 +51,6 @@ manuscript/
 # desktop.ini
 desktop.ini
 .DS_Store
+
+# world clim data
+data/world_clim/
