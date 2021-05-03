@@ -13,14 +13,14 @@ Porig<-SpatialPointsDataFrame(stations[,c("Longitude","Latitude")],
 
 #read files of avg temp per month from WorldClim
 #https://www.worldclim.org/data/worldclim21.html
-avg_temp_jul <- raster('D:/chil/wc2.1_30s_tavg/wc2.1_30s_tavg_07.tif')
-avg_temp_aug <- raster('D:/chil/wc2.1_30s_tavg/wc2.1_30s_tavg_08.tif')
+avg_temp_jul <- raster('data/world_clim/wc2/wc2.1_30s_tavg_07.tif')
+avg_temp_aug <- raster('data/world_clim/wc2/wc2.1_30s_tavg_08.tif')
 
-min_temp_jul <- raster('D:/chil/wc2.1_30s_tmin/wc2.1_30s_tmin_07.tif')
-min_temp_aug <- raster('D:/chil/wc2.1_30s_tmin/wc2.1_30s_tmin_08.tif')
+min_temp_jul <- raster('data/world_clim/wc2-2/wc2.1_30s_tmin_07.tif')
+min_temp_aug <- raster('data/world_clim/wc2-2/wc2.1_30s_tmin_08.tif')
 
-max_temp_jul <- raster('D:/chil/wc2.1_30s_tmax/wc2.1_30s_tmax_07.tif')
-max_temp_aug <- raster('D:/chil/wc2.1_30s_tmax/wc2.1_30s_tmax_08.tif')
+max_temp_jul <- raster('data/world_clim/wc2-3/wc2.1_30s_tmax_07.tif')
+max_temp_aug <- raster('data/world_clim/wc2-3/wc2.1_30s_tmax_08.tif')
 
 #adjust boundig box for plotting
 b <- bbox(avg_temp_jul)
@@ -46,5 +46,5 @@ stations$max_temp_jul <- extract(max_temp_jul,Porig)
 stations$max_temp_aug <- extract(max_temp_aug,Porig)
 
 #save updated stations-df
-write.csv(stations,'data/all_chill_projections.csv',
+write.csv(stations, 'data/all_chill_projections.csv',
           row.names = F)

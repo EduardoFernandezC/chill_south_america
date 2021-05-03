@@ -15,15 +15,15 @@ stations$outlier <- is_outlier
 
 ####test mean temp july
 
-#subset of original station data according to breakes
+#subset of original station data according to breaks
 low <- subset(stations, stations$avg_temp_jul <= lower_break)
 mid <- subset(stations, stations$avg_temp_jul > lower_break & stations$avg_temp_jul <upper_break)
 up <- subset(stations, stations$avg_temp_jul >= upper_break)
 
 #create model for the subset of chill explained by mean temperature in august
-model_low <- lm(data = low, X1981~avg_temp_jul)
-model_mid <- lm(data = mid, X1981~avg_temp_jul)
-model_up <- lm(data = up, X1981~avg_temp_jul)
+model_low <- lm(data = low, X1981 ~ avg_temp_jul)
+model_mid <- lm(data = mid, X1981 ~ avg_temp_jul)
+model_up <- lm(data = up, X1981 ~ avg_temp_jul)
 
 #plot three phases model with all stations included, outliers marked by name
 ggplot(stations,aes(x = avg_temp_jul, y = X1981)) +
