@@ -2,7 +2,7 @@
 title: 'Concept of Spatial Chill Interpolation'
 author: "L. Caspersen"
 date: "5/4/2021"
-output: github_document
+output: html_document
 bibliography: references.bib
 ---
 
