@@ -46,12 +46,15 @@ data/*.rar
 data/future_temps/
 data/projections/
 data/patched_temps/
+<<<<<<< HEAD
 
 #ignore wporldclim
 data/worldclim/
 
 #irgnore patched temps
 data/patched_temps/
+=======
+>>>>>>> 599524cae8e544ff3c516eb16fef46c88fe72fbc
 
 # manuscript
 manuscript/
