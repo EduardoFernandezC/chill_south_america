@@ -44,11 +44,7 @@ data/*.rar
 
 # csv data files
 data/future_temps/
-
-#ignore wporldclim
-data/worldclim/
-
-#irgnore patched temps
+data/projections/
 data/patched_temps/
 
 # manuscript
