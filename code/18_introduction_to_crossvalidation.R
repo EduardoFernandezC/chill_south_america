@@ -11,6 +11,7 @@ library(tidyverse)#for plotting of correction model
 library(metR)#for geom_contour_fill function
 library(colorRamps)#for matlab.like function
 library(data.table)#needed to Concatenate a list of data frames
+library(tmaptools) #get brewer pal
 
 data(meuse)
 coordinates(meuse) <- ~x+y
@@ -47,9 +48,37 @@ f.1 <- as.formula(paste(scen, "~ Longitude + Latitude"))
 var.smpl <- variogram(f.1, Porig, cloud = FALSE)
 dat.fit <- fit.variogram(var.smpl, fit.ranges = FALSE, fit.sills = FALSE,
                          vgm(psill = 275, model="Sph", nugget = 20, range = 1500))
-out <- krige.cv(f.1, Porig, dat.fit, nfold = 10)
-out$abs_residual <- abs(out$residual)
-bubble(out, "residual", main = "chill 1981: 10-fold CV residuals")
+
+#k-fold cross-validation
+
+#set number of repetitions
+r <- 5
+
+#set number of splits 
+k <- 10
+
+#empty list
+crossval_df <- data.frame(NA)
+
+#loop to save the outputs in a líst and compute mean values
+for(i in 1:r){
+  out <- krige.cv(f.1, Porig, dat.fit, nfold = k)
+  crossval_df <- cbind(crossval_df,out$residual)
+}
+#first column is empty, so drop it
+crossval_df <- crossval_df[,-1]
+
+#calculate the mean resiudal and standard deviation per row
+crossval_df <- transform(crossval_df, mean_residual=apply(crossval_df,1, mean, na.rm = TRUE))
+crossval_df <- transform(crossval_df, sd_residual=apply(crossval_df[,1:5],1, sd, na.rm = TRUE))
+
+crossval_krig <- Porig
+crossval_krig$residual <- crossval_df$mean_residual
+crossval_krig$abs_residual <- abs(crossval_krig$residual)
+
+#out <- krige.cv(f.1, Porig, dat.fit, nfold = 10)
+#out$abs_residual <- abs(out$residual)
+#bubble(out, "residual", main = "chill 1981: 10-fold CV residuals")
 
 
 SA <- readOGR('data/sa_outline/SA_outline.shp')
@@ -57,7 +86,7 @@ SA <- readOGR('data/sa_outline/SA_outline.shp')
 
 chill_residual <- tm_shape(SA)+
   tm_borders(col = 'black')+
-  tm_shape(out) + 
+  tm_shape(crossval_krig) + 
   tm_bubbles(size = 'abs_residual',col = 'residual', palette=get_brewer_pal("RdBu"),
              midpoint = 0, breaks=seq(-40,70,by=10))+
   tm_grid()+ 
@@ -70,38 +99,12 @@ tmap_save(chill_residual, filename = 'figures/cross-validation/residual_uncorrec
 #its nice to see that especially argentinas residuals are low, much lower than chiles. is this because chiles topography is more complex and leads thus to more potential errors?
 
 
-
-#####
-#some metrics on the cross validation
-#####
-
-summary(out)
-
-# mean error, ideally 0:
-mean(out$residual)
-
-# MSPE, ideally small
-mean(out$residual^2)
-
-# Mean square normalized error, ideally close to 1
-mean(out$zscore^2)
-
-# correlation observed and predicted, ideally 1
-cor(out$observed, out$observed - out$residual)
-
-# correlation predicted and residual, ideally 0
-cor(out$observed - out$residual, out$residual)
-
-
-
-
-
 ######
 #cross validation for correction model
 ######
 
 #somehow I can't manage to use the above used function on the correction model, because I dont manage to use the krige function on non-spatial data correctly
-#so I assume I need to construnct the cross validation by hand
+#so I assume I need to construct the cross validation by hand
 
 #concept of k-fold cross validation (http://www.sthda.com/english/articles/38-regression-model-validation/157-cross-validation-essentials-in-r/#cross%20validation)
 
@@ -110,6 +113,7 @@ cor(out$observed - out$residual, out$residual)
 # 3) Test the model on the reserved subset and record the prediction error
 # 4) Repeat this process until each of the k subsets has served as the test set.
 # 5) Compute the average of the k recorded errors. This is called the cross-validation error serving as the performance metric for the model.
+
 
 #remove otuliers from the set
 is_outlier <- abs(stations$avg_temp_jul - stations$obs_avg_temp_jul) > 2
@@ -124,9 +128,9 @@ set.seed(123)
 
 #set number of groups for the k-fold cross validation
 k <-5
-#split data set in k even groups
-split_df <- split(stations_clean, sample(1:k, nrow(stations_clean), replace=T))
-
+#set number of repetitions
+r <- 5
+#decide which chill year is evaluated
 scen <- 'X1981' #set the column of chill values to perform analysis on
 
 #function which gets the chill correction for a tmin and tmax entry, work only for individual values, needs to be used in a loop / apply function
@@ -142,72 +146,96 @@ get_chill_correction <-  function(tmin, tmax, lookup = pred){
   }
 }
 
-eval_list <- vector(mode = "list", length = k)
-
-#here should be a loop, i is marking the data frame which is held back to be used as validation
-for(i in 1:k){
-  #combine all splits except the one for the training
-  train_df <-as.data.frame(rbindlist(split_df[-i]))
-  eval_df <- split_df[[i]]
+for(rep in 1:r){
+  #split data set in k even groups
+  split_df <- split(stations_clean, sample(1:k, nrow(stations_clean), replace=T))
   
-  #do the krigging
-  krig_model <- Krig(x=as.matrix(train_df[,c("min_temp_jul","max_temp_jul")]),
-                     Y=train_df[scen])
-  pred <- predictSurface(krig_model)
+  #create empty list in which the values are stored
+  eval_list <- vector(mode = "list", length = k)
   
-  #rename rows and columns
-  colnames(pred$z)<-pred$y
-  rownames(pred$z)<-pred$x
-  
-  #melt the data frame
-  melted<-melt(pred$z)
-  colnames(melted)<-c("min_temp_jul","max_temp_jul","value")
-  
-  #do plotting
-  correction_plane <- ggplot(melted,
-                             aes(x=min_temp_jul,y=max_temp_jul,z=value)) +
-    geom_contour_fill(bins=100) +
-    scale_fill_gradientn(colours=alpha(matlab.like(15)),
-                         name=paste("\nSafe Chill Portions\n[CP]",sep=''), trans = 'reverse') +
-    geom_contour(col="black")  +
-    geom_point(data=train_df,
-               aes(x=min_temp_jul,y=max_temp_jul,z=NULL),
-               size=0.7) +
-    geom_point(data = eval_df,aes(x=min_temp_jul,y=max_temp_jul,z=NULL),
-               size = 1, shape = 25,fill = 'black')+
-    geom_text_contour(stroke = 0.2,size = 2) +
-    labs(title = scen)+
-    ylab('Maximum Temperature, July [°C]')+
-    xlab('Minimum Temperature, July [°C]')+
-    theme_bw(base_size=12)
-  correction_plane
-  #now a number of validation points are outside the correction range
-  #--> should I just exclude these or should I have a special subset of the outline points and always include them in the training data set?
-  
-
-  eval_df$model_value <- NA
-  for(row in 1:nrow(eval_df)){
-    eval_df$model_value[row] <- get_chill_correction(tmin = eval_df$min_temp_jul[row], tmax = eval_df$max_temp_jul[row], lookup = pred)
+  #loop, i is marking the data frame which is held back to be used as validation
+  for(i in 1:k){
+    #combine all splits except the one for the training
+    train_df <-as.data.frame(rbindlist(split_df[-i]))
+    eval_df <- split_df[[i]]
     
+    #do the krigging
+    krig_model <- Krig(x=as.matrix(train_df[,c("min_temp_jul","max_temp_jul")]),
+                       Y=train_df[scen])
+    pred <- predictSurface(krig_model)
+    
+    #rename rows and columns
+    colnames(pred$z)<-pred$y
+    rownames(pred$z)<-pred$x
+    
+    #melt the data frame
+    melted<-melt(pred$z)
+    colnames(melted)<-c("min_temp_jul","max_temp_jul","value")
+    
+    #do plotting
+    correction_plane <- ggplot(melted,
+                               aes(x=min_temp_jul,y=max_temp_jul,z=value)) +
+      geom_contour_fill(bins=100) +
+      scale_fill_gradientn(colours=alpha(matlab.like(15)),
+                           name=paste("\nSafe Chill Portions\n[CP]",sep=''), trans = 'reverse') +
+      geom_contour(col="black")  +
+      geom_point(data=train_df,
+                 aes(x=min_temp_jul,y=max_temp_jul,z=NULL),
+                 size=0.7) +
+      geom_point(data = eval_df,aes(x=min_temp_jul,y=max_temp_jul,z=NULL),
+                 size = 1, shape = 25,fill = 'black')+
+      geom_text_contour(stroke = 0.2,size = 2) +
+      labs(title = scen)+
+      ylab('Maximum Temperature, July [°C]')+
+      xlab('Minimum Temperature, July [°C]')+
+      theme_bw(base_size=12)
+    correction_plane
+    #now a number of validation points are outside the correction range
+    #--> should I just exclude these or should I have a special subset of the outline points and always include them in the training data set?
+    
+    #add emtpy row to df to save model chill values
+    eval_df$model_value <- NA
+    #function to extract chill value from the model, function operates only on one row, so need for loop
+    for(row in 1:nrow(eval_df)){
+      eval_df$model_value[row] <- get_chill_correction(tmin = eval_df$min_temp_jul[row], tmax = eval_df$max_temp_jul[row], lookup = pred)
+      
+    }
+    #save results to bigger data frame
+    eval_list[[i]] <- eval_df
+    #stations_clean <- merge.data.frame(stations_clean,eval_df[,c(1,5)],by='station_name',all.x = T,)
   }
-  #save results to bigger data frame
-  eval_list[[i]] <- eval_df
-  #stations_clean <- merge.data.frame(stations_clean,eval_df[,c(1,5)],by='station_name',all.x = T,)
+  
+  #combine all observations to one data frame
+  eval_df <- as.data.frame(rbindlist(eval_list))
+  
+  #calculate the resiudal (observation - prediction)
+  eval_df$residual <- eval_df$X1981 - eval_df$model_value
+  
+  if(rep == 1){
+    #create new df where the results of the repititons are saved
+    eval_df_final <- eval_df[,-5]
+  } else {
+    eval_df_final <- cbind(eval_df_final,eval_df$residual)
+  }
 }
 
-#combine all observations to one data frame
-eval_df <- as.data.frame(rbindlist(eval_list))
+eval_df_final <- transform(eval_df_final, mean_residual=apply(eval_df_final[,5:9],1, mean, na.rm = TRUE))
+eval_df_final <- transform(eval_df_final, sd_residual=apply(eval_df_final[,5:9],1, sd, na.rm = TRUE))
 
-#calculate the resiudal (observation - prediction)
-eval_df$residual <- eval_df$X1981 - eval_df$model_value 
-eval_df$res_binned <- cut(eval_df$residual,breaks=c(seq(-20,30,by=5)))
+#drop undwanted columns from eval_df_final
+eval_df_final <- eval_df_final[,-c(5:9)]
 
-correction_plane <- ggplot(eval_df, aes(x=min_temp_jul, y=max_temp_jul, size = abs(residual),col = res_binned)) +
+summary(eval_df_final)
+
+eval_df_final$res_binned <- cut(eval_df_final$mean_residual,breaks=c(seq(-10,10,by=2)))
+
+correction_plane <- ggplot(eval_df_final, aes(x=min_temp_jul, y=max_temp_jul, size = abs(mean_residual),col = res_binned)) +
   geom_point()+
   scale_colour_brewer(type = 'div', palette = "RdBu")+
   ylab('Maximum Temperature, July [°C]')+
   xlab('Minimum Temperature, July [°C]')+
   theme_bw()
+correction_plane
 ggsave(plot = correction_plane,filename = 'figures/cross-validation/correction-model.jpg',
        height = 10,width = 15, units = 'cm')
 
@@ -246,7 +274,7 @@ correction_plane <- ggplot(melted,
   ylab('Maximum Temperature, July [°C]')+
   xlab('Minimum Temperature, July [°C]')+
   theme_bw(base_size=12)+
-  geom_point(data = eval_df,aes(x=min_temp_jul,y=max_temp_jul,z=NULL,size = abs(residual),col = res_binned))+
+  geom_point(data = eval_df_final,aes(x=min_temp_jul,y=max_temp_jul,z=NULL,size = abs(mean_residual),col = res_binned))+
   scale_colour_brewer(type = 'div', palette = "RdBu")
 correction_plane
 ggsave(plot = correction_plane,filename = 'figures/cross-validation/correction-model2.jpg',
