@@ -41,13 +41,13 @@ knitr::include_graphics(c('figures/interpolation/original_tavg_jul.jpg',
 
 A combination of minimum and maximum temperature was used as correction variable. WorldClim data was compared to local climate records, stations with an absolute difference greater than 2°C in mean temperature of July were excluded. 
 
-```{r,echo = FALSE,fig.align='center'}
+```{r,echo = FALSE,fig.align='center',out.width="60%"}
 knitr::include_graphics('figures/dot_plot.jpg')
 
 ```
  In order to quantify associated chill for other minimum and maximum temperatures, the areas in between were spatially interpolated using kriging. The result is a correction surface for many extreme temperature combinations. Around 70% of all temperature combinations observed in South America are covered by the model. Outlying combinations ususally stem from either tropical rainforest or peaks of the Andes. 
  
-```{r,echo = FALSE,fig.align='center'}
+```{r,echo = FALSE,fig.align='center',out.width="80%"}
 knitr::include_graphics('figures/interpolation/correction_plane_X1981.jpg')
 
 ```
@@ -57,14 +57,14 @@ knitr::include_graphics('figures/interpolation/correction_plane_X1981.jpg')
 
 Values of original and interpolated correction variable were inserted to extract the associated chill. Then associated chill of the interpolated correction variable is subtracted from the SWC of original proxy, resulting in a map showing in which regions chill should by added or subtracted from the map of interpolated SWC. Blue areas show regions in which SWC should be added to kriged SWC and red areas show where chill should be subtracted. 
 
-```{r,echo = FALSE,fig.align='center'}
+```{r,echo = FALSE,fig.align='center',out.width="60%"}
 knitr::include_graphics('figures/interpolation/chill_correction_X1981.jpg')
 
 ```
 
 Finally the correction map is added to the kriged SWC map, by ensuring that the correction does not lead to SWC values lower than 0. Areas in which the correction model was not applicable are marked in grey dashes on the final map.
 
-```{r,echo = FALSE,fig.align='center'}
+```{r,echo = FALSE,fig.align='center',out.width="60%"}
 knitr::include_graphics('figures/interpolation/adjusted_chill_X1981.jpg')
 
 ```
@@ -72,7 +72,7 @@ knitr::include_graphics('figures/interpolation/adjusted_chill_X1981.jpg')
 This process was carried out for all years of interest (1981, 1985, 1989, 1993, 1997, 2001, 2005, 2009, 2013, 2017). Furthermore, the method was applied on projections of future SWC for two periods of interest, here marked by their centroid years 2050 and 2085. Furthermore, two climate change scenarios were considered (RCP 4.5 and 8.5). In total 15 global climate models were utilized. Calculated SWC was then further summarized using quantiles in optimistic (0.85), intermediate (0.5) and pessimistic (0.15) model output.
 Furthermore, the change in SWC compared to 2017 was calculated.
 
-```{r,echo = FALSE,fig.align='center'}
+```{r,echo = FALSE,fig.align='center',out.width="60%"}
 knitr::include_graphics('figures/interpolation/change_2017_rcp85_2085_pessimistic.jpg')
 
 ```
@@ -81,7 +81,7 @@ knitr::include_graphics('figures/interpolation/change_2017_rcp85_2085_pessimisti
 
 Results were evaluated using the method of repeated k-fold crossvalidation (5 repetions and k=7). This means that the data set of climate stations is split randomly in k=7 groups of the same size. Each of the seven groups is once treated as a validation data set while the rest is combined to a training dataset to compile the final chill map. Values of SWC in the final map constructed using only the training dataset is compared to values at the location of the climate stations of the evaluation dataset. Therefore each climate station was once part of the evaluation dataset and k-1 times part of the training data set. The difference of observed (value of evaluation dataset) and predicted (value of interpolation map) is the residual. Since the grouping can affect the outcome of the residuals, this process is repeated r=5 times and the mean residual is computed. Size of the bubbles in the map correspond to the absolute value of the residual, while the color indicates if the interpolation either overestimated (negative residual, red) or underestimated (positive resiudal, blue) the SWC value.
 
-```{r,echo = FALSE,fig.align='center'}
+```{r,echo = FALSE,fig.align='center',out.width="60%"}
 knitr::include_graphics('figures/cross-validation/residual_corrected-krig.jpg')
 
 ```
