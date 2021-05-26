@@ -92,29 +92,40 @@ max_temp_jul <- crop(max_temp_jul, bb)
 temp_min.res <- resample(min_temp_jul, raster(grd))
 temp_max.res <- resample(max_temp_jul, raster(grd))
 
-## produce interpolated layer from both temperature maps of all station locations
-f.temp_min <- as.formula(min_temp_jul ~ Longitude + Latitude)
-f.temp_max <- as.formula(max_temp_jul ~ Longitude + Latitude)
+# ## produce interpolated layer from both temperature maps of all station locations
+# f.temp_min <- as.formula(min_temp_jul ~ Longitude + Latitude)
+# f.temp_max <- as.formula(max_temp_jul ~ Longitude + Latitude)
+# 
+# #set up variogram
+# var.smpl.temp_min <- variogram(f.temp_min, Porig,cutoff = 1400)
+# var.smpl.temp_max <- variogram(f.temp_max, Porig)
+# 
+# dat.fit.temp_min <- fit.variogram(var.smpl.temp_min, fit.ranges = FALSE,
+#                                   fit.sills = FALSE,
+#                                   vgm(model = "Sph", range = 2600, psil = 12, nugget = 3))
+# dat.fit.temp_max <- fit.variogram(var.smpl.temp_max, fit.ranges = FALSE,
+#                                   fit.sills = FALSE,
+#                                   vgm(model = "Sph", range = 2600, psil = 5, nugget = 1))
+# 
+# #check the variogram
+# plot(var.smpl.temp_min, dat.fit.temp_min)
+# plot(var.smpl.temp_max, dat.fit.temp_max)
 
-#set up variogram
-var.smpl.temp_min <- variogram(f.temp_min, Porig)
-var.smpl.temp_max <- variogram(f.temp_max, Porig)
+####semivariogram
 
-dat.fit.temp_min <- fit.variogram(var.smpl.temp_min, fit.ranges = FALSE,
-                                  fit.sills = FALSE,
-                                  vgm(model = "Sph", range = 2600, psil = 12, nugget = 3))
-dat.fit.temp_max <- fit.variogram(var.smpl.temp_max, fit.ranges = FALSE,
-                                  fit.sills = FALSE,
-                                  vgm(model = "Sph", range = 2600, psil = 5, nugget = 1))
+# At this point I will try to use a different approach by using a function that fits automatically the
+# variogram based on the data. This may be helpful since there will be no need to set the nugget, psill, and
+# range manually
+#fix.values = c(nugget, range: sill); NA = not fixed, decided to ignore values of distance > 1500, that is why range = 240
+var_smpl_min_temp_jul <- automap::autofitVariogram(f.temp_min, Porig)
+plot(var_smpl_min_temp_jul)
 
-#check the variogram
-#plot(var.smpl.temp_min, dat.fit.temp_min)
-#plot(var.smpl.temp_max, dat.fit.temp_max)
-
+var_smpl_max_temp_jul <- automap::autofitVariogram(f.temp_max, Porig,fix.values = c(NA,240,NA))
+plot(var_smpl_max_temp_jul)
 
 #do the krigging
-dat.krg.temp_min <- krige(f.temp_min, Porig, grd, dat.fit.temp_min)
-dat.krg.temp_max <- krige(f.temp_max, Porig, grd, dat.fit.temp_max)
+dat.krg.temp_min <- krige(f.temp_min, Porig, grd, var_smpl_min_temp_jul$var_model)
+dat.krg.temp_max <- krige(f.temp_max, Porig, grd, var_smpl_max_temp_jul$var_model)
 
 #transform the kriged surface to a raster
 r_krig_min <- raster(dat.krg.temp_min)
@@ -127,11 +138,9 @@ r.m_max <- mask(r_krig_max, SA)
 temp_diff_min <- r.m_min - temp_min.res
 temp_diff_max <- r.m_max - temp_max.res
 
-
-#check for outliers in the tmean and remove them
-is_outlier <- abs(stations$avg_temp_jul - stations$obs_avg_temp_jul) > 2
-stations$outlier <- is_outlier
-stations_clean <- stations[!stations$outlier, ]
+#remove outliers from the dataset to construc the correction model
+#remove stations either outlying in tmin or tmax
+stations_clean <- subset(stations, !(outlier_tmin_jul | outlier_tmax_jul))
 
 #function which gets the chill correction for a tmin and tmax entry, work only for individual values, needs to be used in a loop / apply function
 get_chill_correction <-  function(tmin, tmax, lookup = pred){
@@ -263,22 +272,30 @@ for(scen in scenarions){
   # Define the krigging model for the chill
   f.1 <- as.formula(paste(scen, "~ Longitude + Latitude"))
   
-  # Compute the sample variogram; note that the f.1 trend model is one of the
-  # parameters passed to variogram(). This tells the function to create the
-  # variogram on the de-trended data.
-  var.smpl <- variogram(f.1, Porig, cloud = FALSE)
+  # # Compute the sample variogram; note that the f.1 trend model is one of the
+  # # parameters passed to variogram(). This tells the function to create the
+  # # variogram on the de-trended data.
+  # var.smpl <- variogram(f.1, Porig, cloud = FALSE)
+  # 
+  # # Compute the variogram model by passing the nugget, sill and range values
+  # # to fit.variogram() via the vgm() function.
+  # dat.fit <- fit.variogram(var.smpl, fit.ranges = FALSE, fit.sills = FALSE,
+  #                          vgm(psill = 275, model = "Sph", nugget = 20, range = 1500))
+  # 
+  # #check the variogram  
+  # #plot(var.smpl,dat.fit)
+  # 
+  # # Perform the krige interpolation (note the use of the variogram model
+  # # created in the earlier step)
+  # dat.krg.chil <- krige(f.1, Porig, grd, dat.fit)
   
-  # Compute the variogram model by passing the nugget, sill and range values
-  # to fit.variogram() via the vgm() function.
-  dat.fit <- fit.variogram(var.smpl, fit.ranges = FALSE, fit.sills = FALSE,
-                           vgm(psill = 275, model = "Sph", nugget = 20, range = 1500))
+  var.smpl <- automap::autofitVariogram(f.1, Porig)
   
-  #check the variogram  
-  #plot(var.smpl,dat.fit)
+  plot(var.smpl)
   
-  # Perform the krige interpolation (note the use of the variogram model
-  # created in the earlier step)
-  dat.krg.chil <- krige(f.1, Porig, grd, dat.fit)
+  #do the krigging
+  dat.krg.chil <- krige(f.1, Porig, grd, var.smpl$var_model)
+  
   
   #assign krigged data to the raster
   r_krig <- raster(dat.krg.chil)

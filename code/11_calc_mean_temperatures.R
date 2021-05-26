@@ -14,20 +14,22 @@ temp_files <- lapply(temp, function (x) read.csv(paste0(path, x)))
 
 #just a test to see if it works
 temp1 <- read.csv(paste0(path, 'WS_1_ARTURO MERINO BENITEZ INTL.csv'))
-sub1 <- temp1[temp1$Month == 7,]
+sub1 <- subset(temp1, Year >= min_year & Year <= max_year & Month == 7)
 sub1$t_mean <- round((sub1$Tmax + sub1$Tmin) / 2, digits = 2)
 mean(sub1$t_mean)
+mean(sub1$Tmin)
+mean(sub1$Tmax)
 
-calc_tmean <- function(df, month){
+calc_tmean <- function(df, month, max_year, min_year){
   #subset the data frame
-  sub1 <- df[df$Month == month, ]
-  return(mean((sub1$Tmax + sub1$Tmin)/2, na.rm = T))
+  sub1 <- subset(df, Year >= min_year & Year <= max_year & Month == month)
+  return(c(mean((sub1$Tmax + sub1$Tmin)/2, na.rm = T),mean(sub1$Tmin, na.rm = T),mean(sub1$Tmax, na.rm = T)))
 }
 
-calc_tmean_sd <- function(df, month){
+calc_tmean_sd <- function(df, month, max_year, min_year){
   #subset the data frame
-  sub1 <- df[df$Month == month, ]
-  return(sd((sub1$Tmax + sub1$Tmin)/2, na.rm = T))
+  sub1 <- subset(df, Year >= min_year & Year <= max_year & Month == month)
+  return(c(sd((sub1$Tmax + sub1$Tmin)/2, na.rm = T),sd(sub1$Tmin, na.rm = T),sd(sub1$Tmax, na.rm = T)))
 }
 
 
@@ -36,20 +38,27 @@ station_names <- sapply(temp, function(x){
   return(str_split(str_split(x, pattern = '_')[[1]][3], pattern = '.csv')[[1]][1])
 })
 
+calc_tmean(temp_files[[1]],month = 7,min_year = 1980,max_year = 2000)
+
 #remove names of vectotr
 station_names <- unname(station_names)
 
 #calculate mean temperature and sd of mean temp of jun, jul, aug
-t_jul <- sapply(temp_files, calc_tmean, 7)
-t_jul_sd <- sapply(temp_files, calc_tmean_sd, 7)
-t_aug <- sapply(temp_files, calc_tmean, 8)
-t_aug_sd <- sapply(temp_files, calc_tmean_sd, 8)
+t_jul <- t(sapply(temp_files, calc_tmean, 7, 2000,1980))
+t_jul_sd <- t(sapply(temp_files, calc_tmean_sd, 7,2000,1980))
+t_aug <- t(sapply(temp_files, calc_tmean, 8,2000,1980))
+t_aug_sd <- t(sapply(temp_files, calc_tmean_sd, 8, 2000,1980))
 
 #combine to data frame
 df_temp <- data.frame(station_names, t_jul, t_jul_sd, t_aug, t_aug_sd)
 
-colnames(df_temp) <- c('Name', 'obs_avg_temp_jul',
-                       'sd_obs_avg_temp_jul', 'obs_avg_temp_aug', 'sd_obs_avg_temp_aug')
+colnames(df_temp) <- c('Name', 'obs_avg_temp_jul','obs_tmin_jul','obs_tmax_jul',
+                       'sd_obs_avg_temp_jul', 'sd_obs_tmin_jul','sd_obs_tmax_jul',
+                       'obs_avg_temp_aug','obs_tmin_aug','obs_tmax_aug',
+                       'sd_obs_avg_temp_aug', 'sd_obs_tmin_aug','sd_obs_tmax_aug')
+
+#round the data because we dont need so many digits
+df_temp[,-1] <- round(df_temp[,-1],digits = 2)
 
 #read stations data frame
 stations <- read.csv('data/all_chill_projections.csv')
@@ -61,47 +70,129 @@ stations <- merge.data.frame(stations, df_temp, by.x = 'station_name', by.y = 'N
 write.csv(stations, file = 'data/all_chill_projections.csv', row.names = F)
 
 
+
+
 # Some quality check plots
 
 # df needed to draw the ribbon
 df <- data.frame(obs_avg_temp_jul = 0:30, avg_temp_jul = 0:30)
 
+
+####  Tmean
+
 ggplot(stations,aes(x= obs_avg_temp_jul, y = avg_temp_jul)) + 
   geom_ribbon(data = df, aes(ymin = avg_temp_jul -2, ymax = avg_temp_jul +2), fill="grey", alpha=.5)+
-  geom_point() + 
+  geom_point() +
+  #geom_errorbar(aes(ymin=avg_temp_jul-sd_obs_avg_temp_jul, ymax = avg_temp_jul + sd_obs_avg_temp_jul))+
   geom_abline(slope = 1,intercept = 0)+
   coord_cartesian(xlim = c(0,28),ylim=c(0,28))+
   ylab('WorldClim: Avergae Temperature, July [°C]')+
   xlab('Station: Avergae Temperature, July [°C]')+
   theme_bw()
-ggsave('figures/WorldClim_vs_Station.jpg')
+ggsave('figures/outliers_tmean.png')
 
 #shouldnt I also include the sd for this analysis. maybe points on the edge of the ribbon actually overlap it 
 #when sd is included
 
 
-
-is_outlier <- abs(stations$avg_temp_jul - stations$obs_avg_temp_jul) > 2
-stations$outlier <- is_outlier
+stations$outlier_tmean_jul <- abs(stations$avg_temp_jul - stations$obs_avg_temp_jul) > 2
+sum(stations$outlier_tmean_jul)
 
 ggplot(stations,aes(x = obs_avg_temp_jul, y = avg_temp_jul)) +
   geom_ribbon(data = df, aes(ymin = avg_temp_jul -2, ymax = avg_temp_jul +2), fill="grey", alpha=.5)+
   geom_point()+
   geom_abline(intercept = 0,slope = 1)+
   geom_label_repel(
-    data = subset(stations, outlier),
+    data = subset(stations, outlier_tmean_jul),
     aes(label = station_name),
     box.padding = unit(0.35, "lines"),
     point.padding = unit(0.3, "lines"),
     min.segment.length = 0,
     nudge_x = 5
   )+
-  ylab('WorldClim')+
-  xlab('Climate Station')+
-  ggtitle('Mean Temperature in July')+
+  ylab('WorldClim: Avergae Temperature, July [°C]')+
+  xlab('Station: Avergae Temperature, July [°C]')+
   theme_bw()
-
-ggsave("figures/outliers_wordclim_vs_stations.png")
+ggsave("figures/outliers_tmean_annotated.png")
 
 #identify the outliers in july
+
+####Tmin
+
+#for ribbon
+df <- data.frame(obs_tmin_jul = -6:26, min_temp_jul = -6:26)
+
+ggplot(stations,aes(x= obs_tmin_jul, y = min_temp_jul)) + 
+  geom_ribbon(data = df, aes(ymin = min_temp_jul -2, ymax = min_temp_jul +2), fill="grey", alpha=.5)+
+  geom_point() +
+  #geom_errorbar(aes(ymin=avg_temp_jul-sd_obs_avg_temp_jul, ymax = avg_temp_jul + sd_obs_avg_temp_jul))+
+  geom_abline(slope = 1,intercept = 0)+
+  coord_cartesian(xlim = c(-4,24),ylim=c(-4,24))+
+  ylab('WorldClim: Minimum Temperature, July [°C]')+
+  xlab('Station: Minimum Temperature, July [°C]')+
+  theme_bw()
+ggsave('figures/outliers_tmin.png')
+
+stations$outlier_tmin_jul <- abs(stations$min_temp_jul - stations$obs_tmin_jul) > 2
+sum(stations$outlier_tmin_jul)
+
+ggplot(stations,aes(x= obs_tmin_jul, y = min_temp_jul)) + 
+  geom_ribbon(data = df, aes(ymin = min_temp_jul -2, ymax = min_temp_jul +2), fill="grey", alpha=.5)+
+  geom_point() +
+  #geom_errorbar(aes(ymin=avg_temp_jul-sd_obs_avg_temp_jul, ymax = avg_temp_jul + sd_obs_avg_temp_jul))+
+  geom_abline(slope = 1,intercept = 0)+
+  geom_label_repel(
+    data = subset(stations, outlier_tmin_jul),
+    aes(label = station_name),
+    box.padding = unit(0.35, "lines"),
+    point.padding = unit(0.3, "lines"),
+    min.segment.length = 0,
+    nudge_x = 6
+  )+
+  ylab('WorldClim: Minimum Temperature, July [°C]')+
+  xlab('Station: Minimum Temperature, July [°C]')+
+  theme_bw()
+ggsave("figures/outliers_tmin_annotated.png")
+
+#### Tmax
+df <- data.frame(obs_tmax_jul = -2:35, max_temp_jul = -2:35)
+
+ggplot(stations,aes(x= obs_tmax_jul, y = max_temp_jul)) + 
+  geom_ribbon(data = df, aes(ymin = max_temp_jul -2, ymax = max_temp_jul +2), fill="grey", alpha=.5)+
+  geom_point() +
+  #geom_errorbar(aes(ymin=avg_temp_jul-sd_obs_avg_temp_jul, ymax = avg_temp_jul + sd_obs_avg_temp_jul))+
+  geom_abline(slope = 1,intercept = 0)+
+  coord_cartesian(xlim = c(0,33),ylim=c(0,33))+
+  ylab('WorldClim: Maximum Temperature, July [°C]')+
+  xlab('Station: Maximum Temperature, July [°C]')+
+  theme_bw()
+ggsave('figures/outliers_tmax.png')
+
+
+stations$outlier_tmax_jul <- abs(stations$max_temp_jul - stations$obs_tmax_jul) > 2
+sum(stations$outlier_tmax_jul)
+
+ggplot(stations,aes(x= obs_tmax_jul, y = max_temp_jul)) + 
+  geom_ribbon(data = df, aes(ymin = max_temp_jul -2, ymax = max_temp_jul +2), fill="grey", alpha=.5)+
+  geom_point() +
+  #geom_errorbar(aes(ymin=avg_temp_jul-sd_obs_avg_temp_jul, ymax = avg_temp_jul + sd_obs_avg_temp_jul))+
+  geom_abline(slope = 1,intercept = 0)+
+  geom_label_repel(
+    data = subset(stations, outlier_tmax_jul),
+    aes(label = station_name),
+    box.padding = unit(0.35, "lines"),
+    point.padding = unit(0.3, "lines"),
+    min.segment.length = 0,
+    nudge_x = 6
+  )+
+  ylab('WorldClim: Maximum Temperature, July [°C]')+
+  xlab('Station: Maximum Temperature, July [°C]')+
+  theme_bw()
+ggsave("figures/outliers_tmax_annotated.png")
+
+#number of stations outlying either in tmin or tmax
+sum((stations$outlier_tmin_jul | stations$outlier_tmax_jul)) 
+
+#update the stations dataframe
+write.csv(stations, file = 'data/all_chill_projections.csv', row.names = F)
 

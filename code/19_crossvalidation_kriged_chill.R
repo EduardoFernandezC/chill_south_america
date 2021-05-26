@@ -23,7 +23,7 @@ library(data.table)#rbindlist function
 #set height and width (cm) of maps when maps are saved
 
 #number of repeats
-r <- 5
+repititions <- 5
 #number of splits of data set (usually between 5 and 10)
 k <- 7
 
@@ -55,12 +55,12 @@ get_chill_correction <-  function(tmin, tmax, lookup = pred){
 stations <- read.csv('data/all_chill_projections.csv')
 
 #save scenario names to vector
-scenarions <- colnames(stations)[6:27]
+scenarions <- colnames(stations)[6:28]
 
 #trnasform to spatial dataframe
 Porig<-SpatialPointsDataFrame(stations[,c("Longitude","Latitude")],
                               proj4string=CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"),
-                              data=stations[,c(2,5:43)])
+                              data=stations[,c(1,5:34,48,50)])
 
 #outline of south america
 SA <- readOGR('data/sa_outline/SA_outline.shp')
@@ -77,8 +77,8 @@ fullgrid(grd) <- TRUE # Create SpatialGrid object
 proj4string(grd) <- proj4string(Porig)
 
 #load tmin and tmax map for july
-min_temp_jul <- raster('data/worldclim/wc2.1_30s_tmin_07.tif')
-max_temp_jul <- raster('data/worldclim/wc2.1_30s_tmax_07.tif')
+min_temp_jul <- raster('data/world_clim/wc2-2/wc2.1_30s_tmin_07.tif')
+max_temp_jul <- raster('data/world_clim/wc2-3/wc2.1_30s_tmax_07.tif')
 
 #extract south america from world wide map
 min_temp_jul <- crop(min_temp_jul,bb)
@@ -92,7 +92,7 @@ temp_max.res<-resample(max_temp_jul,raster(grd))
 # data splitting   ---------------------------------
 
 #loop for repitions of repeatead k-fold cross-validation
-for(rep in 1:r){
+for(rep in 1:repititions){
   #split data set in k even groups
   split_df <- split(stations, sample(1:k, nrow(stations), replace=T))
   
@@ -105,12 +105,12 @@ for(rep in 1:r){
     train_df <-as.data.frame(rbindlist(split_df[-i]))
     train_df <- SpatialPointsDataFrame(train_df[,c("Longitude","Latitude")],
                                        proj4string=CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"),
-                                       data=train_df[,c(1,5:43)])
+                                       data=train_df[,c(1,5:34,48,50)])
     
     eval_df <- split_df[[i]]
     eval_df <- SpatialPointsDataFrame(eval_df[,c("Longitude","Latitude")],
                                       proj4string=CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"),
-                                      data=eval_df[,c(1,5:43)])
+                                      data=eval_df[,c(1,5:34,48,50)])
     
     
     
@@ -120,20 +120,36 @@ for(rep in 1:r){
     f.temp_min<-as.formula(min_temp_jul ~ Longitude + Latitude)
     f.temp_max<-as.formula(max_temp_jul ~ Longitude + Latitude)
     
-    #set up variogram
-    var.smpl.temp_min <- variogram(f.temp_min, train_df)
-    var.smpl.temp_max <- variogram(f.temp_max, train_df)
+    #old approach to fit variogram
+    # #set up variogram
+    # var.smpl.temp_min <- variogram(f.temp_min, train_df)
+    # var.smpl.temp_max <- variogram(f.temp_max, train_df)
+    # 
+    # dat.fit.temp_min <- fit.variogram(var.smpl.temp_min, fit.ranges = FALSE,
+    #                                   fit.sills = FALSE,
+    #                                   vgm(model="Sph", range = 2600, psil = 12, nugget = 3))
+    # dat.fit.temp_max <- fit.variogram(var.smpl.temp_max, fit.ranges = FALSE,
+    #                                   fit.sills = FALSE,
+    #                                   vgm(model="Sph", range = 2600, psil = 5, nugget = 1))
+    # #do the krigging
+    # dat.krg.temp_min <- krige( f.temp_min, train_df, grd, dat.fit.temp_min)
+    # dat.krg.temp_max <- krige( f.temp_max, train_df, grd, dat.fit.temp_max)
     
-    dat.fit.temp_min <- fit.variogram(var.smpl.temp_min, fit.ranges = FALSE,
-                                      fit.sills = FALSE,
-                                      vgm(model="Sph", range = 2600, psil = 12, nugget = 3))
-    dat.fit.temp_max <- fit.variogram(var.smpl.temp_max, fit.ranges = FALSE,
-                                      fit.sills = FALSE,
-                                      vgm(model="Sph", range = 2600, psil = 5, nugget = 1))
+    # At this point I will try to use a different approach by using a function that fits automatically the
+    # variogram based on the data. This may be helpful since there will be no need to set the nugget, psill, and
+    # range manually
+    #fix.values = c(nugget, range: sill); NA = not fixed, decided to ignore values of distance > 1500, that is why range = 240
+    var_smpl_min_temp_jul <- automap::autofitVariogram(f.temp_min, train_df)
+    #plot(var_smpl_min_temp_jul)
+    
+    var_smpl_max_temp_jul <- automap::autofitVariogram(f.temp_max, train_df,fix.values = c(NA,240,NA))
+    #plot(var_smpl_max_temp_jul)
     
     #do the krigging
-    dat.krg.temp_min <- krige( f.temp_min, train_df, grd, dat.fit.temp_min)
-    dat.krg.temp_max <- krige( f.temp_max, train_df, grd, dat.fit.temp_max)
+    dat.krg.temp_min <- krige(f.temp_min, train_df, grd, var_smpl_min_temp_jul$var_model)
+    dat.krg.temp_max <- krige(f.temp_max, train_df, grd, var_smpl_max_temp_jul$var_model)
+    
+
     
     #transform the kriged surface to a raster
     r_krig_min<-raster(dat.krg.temp_min)
@@ -146,12 +162,10 @@ for(rep in 1:r){
     # Set up correction model  ---------------------------------
     
     #check for outliers in the tmean and remove them
-    is_outlier <- abs(train_df$avg_temp_jul - train_df$obs_avg_temp_jul) > 2
-    train_df$outlier <- is_outlier
-    stations_clean <- as.data.frame(train_df[!train_df$outlier,])
+    stations_clean <- as.data.frame(subset(train_df, !(outlier_tmin_jul | outlier_tmax_jul)))
     
-    #loop for scenarions, right know only first year
-    scen <- scenarions[1]
+    #loop for scenarions, right know only for 1981
+    scen <- scenarions[2]
     
     #krig the tmin tmax data on a plane
     model_krig <- Krig(x=as.matrix(stations_clean[,c("min_temp_jul","max_temp_jul")]),
@@ -198,19 +212,24 @@ for(rep in 1:r){
     # Define the krigging model for the chill
     f.1 <- as.formula(paste(scen, "~ Longitude + Latitude"))
     
-    # Compute the sample variogram; note that the f.1 trend model is one of the
-    # parameters passed to variogram(). This tells the function to create the
-    # variogram on the de-trended data.
-    var.smpl <- variogram(f.1, train_df, cloud = FALSE)
+    #old approach to fit semivariogram
+    # # Compute the sample variogram; note that the f.1 trend model is one of the
+    # # parameters passed to variogram(). This tells the function to create the
+    # # variogram on the de-trended data.
+    # var.smpl <- variogram(f.1, train_df, cloud = FALSE)
+    # 
+    # # Compute the variogram model by passing the nugget, sill and range values
+    # # to fit.variogram() via the vgm() function.
+    # dat.fit <- fit.variogram(var.smpl, fit.ranges = FALSE, fit.sills = FALSE,
+    #                          vgm(psill = 275, model="Sph", nugget = 20, range = 1500))
     
-    # Compute the variogram model by passing the nugget, sill and range values
-    # to fit.variogram() via the vgm() function.
-    dat.fit <- fit.variogram(var.smpl, fit.ranges = FALSE, fit.sills = FALSE,
-                             vgm(psill = 275, model="Sph", nugget = 20, range = 1500))
+    #automatical fitting of variogram, so it works also in a loop where the coefficient cannot be adjusted
+    var.smpl <- automap::autofitVariogram(f.1, train_df)
+    #plot(var.smpl)
     
     # Perform the krige interpolation (note the use of the variogram model
     # created in the earlier step)
-    dat.krg.chil <- krige(f.1, train_df, grd, dat.fit)
+    dat.krg.chil <- krige(f.1, train_df, grd, var.smpl$var_model)
     
     #assign krigged data to the raster
     r_krig<-raster(dat.krg.chil)
@@ -227,9 +246,9 @@ for(rep in 1:r){
     
     #extract values from chill map
     eval_df$model_value <- raster::extract(r.m, eval_df)
-    
-    #transform to data frame, only use columns of interest
-    eval_df <- as.data.frame(eval_df[,c(1,3,41)])
+
+    #transform to data frame, only use columns of interest (name, country, chil1981, modelvalue)
+    eval_df <- as.data.frame(eval_df[,c(1,2,4,34)])
     
     #safe df to list, where all evaluation values are gathered
     eval_list[[i]] <- eval_df
@@ -245,35 +264,51 @@ for(rep in 1:r){
   #if first repetition, then create new object to store the residuals, otherwise just add columns to it
   if(rep == 1){
     #create new df where the results of the repetitions are saved, discard longitude, latitude, model value
-    eval_df_final <- eval_df[,-c(3:5)]
+    eval_df_final <- eval_df[,-c(4:6)]
   } else {
     eval_df_final <- cbind(eval_df_final,eval_df$residual)
   }
 }
 
-#summarise residuals
-eval_df_final <- transform(eval_df_final, mean_residual=apply(eval_df_final[,3:7],1, mean, na.rm = TRUE))
-eval_df_final <- transform(eval_df_final, sd_residual=apply(eval_df_final[,3:7],1, sd, na.rm = TRUE))
+#summarise residuals, select only columns with residual values
+eval_df_final <- transform(eval_df_final, mean_residual=apply(eval_df_final[,4:(4+repititions-1)],1, mean, na.rm = TRUE))
+eval_df_final <- transform(eval_df_final, sd_residual=apply(eval_df_final[,4:(4+repititions-1)],1, sd, na.rm = TRUE))
 
-#drop undwanted columns from eval_df_final
-eval_df_final <- eval_df_final[,-c(3:7)]
-
-#get general stats of residuals
-summary(eval_df_final)
-
-#save also absolute resiudal value for size of bubbles in plot
-eval_df$abs_residual <- abs(eval_df_final$mean_residual)
 
 #add longitude and latitude to df
-eval_df_final <- merge.data.frame(eval_df_final,stations[,c(1,3,4,6)],by=c("station_name","X1981"),all.x = TRUE)
+eval_df_final <- merge.data.frame(eval_df_final,stations[,c(1,3,4,7)],by=c("station_name","X1981"),all.x = TRUE)
 
 #save results
 write.csv(eval_df_final,"data/cross_validation.csv",row.names = F)
 
+#get general stats of residuals
+summary(eval_df_final)
+
+eval_melt <- melt(as.data.table(eval_df_final),id.vars=c('station_name','CTRY','X1981','Latitude','Longitude'))
+eval_melt %>%
+  filter(!(variable %in% c('mean_resiudal','sd_residual')))%>%
+  ggplot(aes(y=value,x=CTRY))+
+  geom_boxplot()+
+  theme_bw()+
+  ylab('Residual (Observation - Prediction)')+
+  xlab('Country')
+
+eval_melt %>%
+  filter((variable == 'mean_residual'))%>%
+  ggplot(aes(y=value,x=CTRY))+
+  geom_boxplot()+
+  theme_bw()+
+  ylab('Mean Residual (Observation - Prediction)')+
+  xlab('Country')
+
+#save also absolute resiudal value for size of bubbles in plot
+eval_df_final$abs_residual <- abs(eval_df_final$mean_residual)
+
+
 #
 eval_df_final <-  SpatialPointsDataFrame(eval_df_final[,c("Longitude","Latitude")],
                        proj4string=CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"),
-                       data=eval_df_final[,c(1:4,7)])
+                       data=eval_df_final[,c(1:3,9,13)])
 
 chill_residual <- tm_shape(SA)+
   tm_borders(col = 'black')+
