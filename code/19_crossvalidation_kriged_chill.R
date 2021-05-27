@@ -107,10 +107,10 @@ for(rep in 1:repititions){
                                        proj4string=CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"),
                                        data=train_df[,c(1,5:34,48,50)])
     
-    eval_df <- split_df[[i]]
-    eval_df <- SpatialPointsDataFrame(eval_df[,c("Longitude","Latitude")],
+    eval_df_original <- split_df[[i]]
+    eval_df_original <- SpatialPointsDataFrame(eval_df_original[,c("Longitude","Latitude")],
                                       proj4string=CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"),
-                                      data=eval_df[,c(1,5:34,48,50)])
+                                      data=eval_df_original[,c(1,5:34,48,50)])
     
     
     
@@ -164,8 +164,8 @@ for(rep in 1:repititions){
     #check for outliers in the tmean and remove them
     stations_clean <- as.data.frame(subset(train_df, !(outlier_tmin_jul | outlier_tmax_jul)))
     
-    #loop for scenarions, right know only for 1981
-    scen <- scenarions[2]
+    #loop for scenarions
+    for (scen in scenarions[1:2]){
     
     #krig the tmin tmax data on a plane
     model_krig <- Krig(x=as.matrix(stations_clean[,c("min_temp_jul","max_temp_jul")]),
@@ -244,35 +244,74 @@ for(rep in 1:repititions){
     
     # evaluation of interpolation result   ---------------------------------
     
+    # The step to follow generates NA values estimated by the model even for locations not excluded by
+    # the rule of 2 C when comparing Tmin and Tmax from WorldClim and on-site data. The following lines
+    # will attempt to address this issue (TBH: I am not sure if we should keep it as is or fix it).
+    # I found a solution in stackoverflow (https://stackoverflow.com/questions/27562076/if-raster-value-na-search-and-extract-the-nearest-non-na-pixel)
+    # that looks for the nearest value estimated by the model...
+    
+    # Generates a data frame only having the coordinates
+    coords_eval_df <- data.frame(x = as.data.frame(eval_df_original)$Longitude,
+                                 y = as.data.frame(eval_df_original)$Latitude)
+    
     #extract values from chill map
-    eval_df$model_value <- raster::extract(r.m, eval_df)
-
+    model_estimates_NA <- raster::extract(r.m, coords_eval_df)
+    
+    # Try the approach looking for the nearest non-NA values (take little because it runs over a vector of 22 values)
+    model_estimates <- apply(X = coords_eval_df, MARGIN = 1,
+                             FUN = function(x) r.m@data@values[which.min(replace(distanceFromPoints(r.m, x),
+                                                                                 is.na(r.m), NA))])
+    # Copy the original eval_df
+    eval_df <- eval_df_original
+    
+    # Add both to the eval_df to compare them latter
+    eval_df$model_value_NA <- model_estimates_NA
+    eval_df$model_value <- model_estimates
+    
     #transform to data frame, only use columns of interest (name, country, chil1981, modelvalue)
-    eval_df <- as.data.frame(eval_df[,c(1,2,4,34)])
+    eval_df <- as.data.frame(eval_df[, c("station_name", "CTRY", scen, "model_value_NA", "model_value")])
+    
+    # Pivot longer for further compatibility
+    eval_df <- pivot_longer(eval_df, scen, names_to = "scenario", values_to = "observed_value")
+    
+    # Generate a big dataframe with multiple scenarios
+    if (scen == scenarions[1]) eval_df_all <- eval_df else eval_df_all <- bind_rows(eval_df_all, eval_df)
+    
+    }# end loop according to scenarios
     
     #safe df to list, where all evaluation values are gathered
-    eval_list[[i]] <- eval_df
+    eval_list[[i]] <- eval_df_all
     
   }#end loop for k-splits of cross validation
   
   #combine all observations to one data frame
-  eval_df <- as.data.frame(rbindlist(eval_list))
+  eval_df_all <- as.data.frame(rbindlist(eval_list))
   
   #calculate the resiudal (observation - prediction)
-  eval_df$residual <- eval_df$X1981 - eval_df$model_value
+  eval_df_all$residual <- eval_df_all$observed_value - eval_df_all$model_value
+  
+  # Add a column for the repetition
+  eval_df_all$repetition <- rep
   
   #if first repetition, then create new object to store the residuals, otherwise just add columns to it
-  if(rep == 1){
-    #create new df where the results of the repetitions are saved, discard longitude, latitude, model value
-    eval_df_final <- eval_df[,-c(4:6)]
-  } else {
-    eval_df_final <- cbind(eval_df_final,eval_df$residual)
-  }
+  if(rep == 1) eval_df_final <- eval_df_all else eval_df_final <- bind_rows(eval_df_final, eval_df_all)
 }
 
 #summarise residuals, select only columns with residual values
-eval_df_final <- transform(eval_df_final, mean_residual=apply(eval_df_final[,4:(4+repititions-1)],1, mean, na.rm = TRUE))
-eval_df_final <- transform(eval_df_final, sd_residual=apply(eval_df_final[,4:(4+repititions-1)],1, sd, na.rm = TRUE))
+# eval_df_final <- transform(eval_df_final, mean_residual=apply(eval_df_final[,4:(4+repititions-1)],1, mean, na.rm = TRUE))
+# eval_df_final <- transform(eval_df_final, sd_residual=apply(eval_df_final[,4:(4+repititions-1)],1, sd, na.rm = TRUE))
+
+# Use tidyverse o summarize the residuals by weather station (mean, median, and sd)
+eval_df_final_summ <- eval_df_final %>% group_by(station_name) %>% 
+  
+  summarize(mean_res = mean(residual),
+            median_res = median(residual),
+            sd = sd(residual))
+
+
+
+################# AQUÍ VOY POR AHORA
+
 
 
 #add longitude and latitude to df

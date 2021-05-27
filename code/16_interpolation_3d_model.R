@@ -92,10 +92,10 @@ max_temp_jul <- crop(max_temp_jul, bb)
 temp_min.res <- resample(min_temp_jul, raster(grd))
 temp_max.res <- resample(max_temp_jul, raster(grd))
 
-# ## produce interpolated layer from both temperature maps of all station locations
-# f.temp_min <- as.formula(min_temp_jul ~ Longitude + Latitude)
-# f.temp_max <- as.formula(max_temp_jul ~ Longitude + Latitude)
-# 
+# produce interpolated layer from both temperature maps of all station locations
+f.temp_min <- as.formula(min_temp_jul ~ Longitude + Latitude)
+f.temp_max <- as.formula(max_temp_jul ~ Longitude + Latitude)
+
 # #set up variogram
 # var.smpl.temp_min <- variogram(f.temp_min, Porig,cutoff = 1400)
 # var.smpl.temp_max <- variogram(f.temp_max, Porig)
@@ -120,7 +120,7 @@ temp_max.res <- resample(max_temp_jul, raster(grd))
 var_smpl_min_temp_jul <- automap::autofitVariogram(f.temp_min, Porig)
 plot(var_smpl_min_temp_jul)
 
-var_smpl_max_temp_jul <- automap::autofitVariogram(f.temp_max, Porig,fix.values = c(NA,240,NA))
+var_smpl_max_temp_jul <- automap::autofitVariogram(f.temp_max, Porig, fix.values = c(NA, 240, NA))
 plot(var_smpl_max_temp_jul)
 
 #do the krigging
@@ -189,7 +189,7 @@ for(scen in scenarions){
                                          z = value)) +
     geom_contour_fill(bins = 100) +
     scale_fill_gradientn(colours = alpha(matlab.like(15)),
-                         name = paste("\nSafe Chill Portions\n[CP]", sep = ''), trans = 'reverse') +
+                         name = paste("Safe Winter Chill\n(in CP)", sep = ''), trans = 'reverse') +
     geom_contour(col = "black")  +
     geom_point(data = stations, aes(x = min_temp_jul,
                                     y = max_temp_jul,
@@ -197,9 +197,14 @@ for(scen in scenarions){
                size = 0.7) +
     geom_text_contour(stroke = 0.2, size = 2) +
     labs(title = scen) +
-    ylab('Maximum Temperature, July [°C]') +
-    xlab('Minimum Temperature, July [°C]') +
-    theme_bw(base_size = 12)
+    ylab('Monthly maximum temperature in July (°C)') +
+    xlab('Monthly minimum temperature in July (°C)') +
+    theme_bw(base_size = 12) +
+    theme(legend.title.align = 0.5,
+          legend.position = c(0.875, 0.25),
+          legend.background = element_blank())
+  
+  cowplot::ggdraw(align_legend(correction_plane)) 
   
   ggsave(plot = correction_plane,
          filename = paste('figures/interpolation/correction_plane_', scen, '.jpg', sep = ''),
