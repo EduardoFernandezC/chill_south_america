@@ -23,7 +23,7 @@ library(data.table)#rbindlist function
 #set height and width (cm) of maps when maps are saved
 
 #number of repeats
-repititions <- 5
+repititions <- 3
 #number of splits of data set (usually between 5 and 10)
 k <- 7
 
@@ -89,18 +89,23 @@ temp_min.res<-resample(min_temp_jul,raster(grd))
 temp_max.res<-resample(max_temp_jul,raster(grd))
 
 
+# Remove the weather stations excluded in the interpolation procedure...
+stations_clean <- as.data.frame(subset(stations, !(outlier_tmin_jul | outlier_tmax_jul)))
+
+
 # data splitting   ---------------------------------
 
 #loop for repitions of repeatead k-fold cross-validation
-for(rep in 1:repititions){
+for(rep in 1 : repititions){
+
   #split data set in k even groups
-  split_df <- split(stations, sample(1:k, nrow(stations), replace=T))
+  split_df <- split(stations_clean, sample(1:k, nrow(stations_clean), replace=T))
   
   #create empty list in which the values are stored
   eval_list <- vector(mode = "list", length = k)
   
   #loop for crossvalidation, i is marking the data frame which is held back to be used as validation
-  for(i in 1:k){
+  for(i in 1 : k){
     #combine all splits except the one for the training
     train_df <-as.data.frame(rbindlist(split_df[-i]))
     train_df <- SpatialPointsDataFrame(train_df[,c("Longitude","Latitude")],
@@ -160,122 +165,119 @@ for(rep in 1:repititions){
     
     
     # Set up correction model  ---------------------------------
-    
-    #check for outliers in the tmean and remove them
-    stations_clean <- as.data.frame(subset(train_df, !(outlier_tmin_jul | outlier_tmax_jul)))
-    
+  
     #loop for scenarions
-    for (scen in scenarions[1:2]){
-    
-    #krig the tmin tmax data on a plane
-    model_krig <- Krig(x=as.matrix(stations_clean[,c("min_temp_jul","max_temp_jul")]),
-                       Y=stations_clean[scen])
-    pred <- predictSurface(model_krig)
-    
-    #adjust row and column name of object
-    colnames(pred$z)<-pred$y
-    rownames(pred$z)<-pred$x
-    
-    #save number of rows and cols
-    no_row <- nrow(r.m_min)
-    no_col <- ncol(r.m_min)
-    
-    #transform kriged tmin and tmax to matrix
-    mat_krig_tmin <- matrix(r.m_min, nrow = no_row, ncol = no_col,byrow = T)
-    mat_krig_tmax <- matrix(r.m_max, nrow = no_row, ncol = no_col,byrow = T)
-    mat_real_tmin <- matrix(temp_min.res, nrow = no_row, ncol = no_col,byrow = T)
-    mat_real_tmax <- matrix(temp_max.res, nrow = no_row, ncol = no_col,byrow = T)
-    
-    #transform matrix to vector and bind tmin and tmax
-    t_both <- cbind(as.vector(mat_krig_tmin),as.vector(mat_krig_tmax))
-    t_both_real <- cbind(as.vector(mat_real_tmin),as.vector(mat_real_tmax))
-    
-    #extract the model chill for real and kriged tmin and tmax
-    model_krigged_temp <- sapply(1:nrow(t_both), function(i) get_chill_correction(t_both[i,1], t_both[i,2]))
-    model_real_temp <- sapply(1:nrow(t_both_real), function(i) get_chill_correction(t_both_real[i,1], t_both_real[i,2]))
-    
-    #calculate the adjustment (so the chill, which so far was not capured by krigging)
-    #problem: model_real_temp contains many NA
-    model_adjust <- model_real_temp - model_krigged_temp
-    
-    model_adjust <- matrix(model_adjust,nrow = no_row, ncol = no_col)
-    
-    #transform the matrix back to a grid
-    raster_model_adjust <- raster(model_adjust)
-    raster_model_adjust <- setExtent(raster_model_adjust,bb)
-    crs(raster_model_adjust) <- crs(r.m_min)
-    
-    
-    # Interpolation of chill  ---------------------------------
-    
-    #do interpolation of chill
-    # Define the krigging model for the chill
-    f.1 <- as.formula(paste(scen, "~ Longitude + Latitude"))
-    
-    #old approach to fit semivariogram
-    # # Compute the sample variogram; note that the f.1 trend model is one of the
-    # # parameters passed to variogram(). This tells the function to create the
-    # # variogram on the de-trended data.
-    # var.smpl <- variogram(f.1, train_df, cloud = FALSE)
-    # 
-    # # Compute the variogram model by passing the nugget, sill and range values
-    # # to fit.variogram() via the vgm() function.
-    # dat.fit <- fit.variogram(var.smpl, fit.ranges = FALSE, fit.sills = FALSE,
-    #                          vgm(psill = 275, model="Sph", nugget = 20, range = 1500))
-    
-    #automatical fitting of variogram, so it works also in a loop where the coefficient cannot be adjusted
-    var.smpl <- automap::autofitVariogram(f.1, train_df)
-    #plot(var.smpl)
-    
-    # Perform the krige interpolation (note the use of the variogram model
-    # created in the earlier step)
-    dat.krg.chil <- krige(f.1, train_df, grd, var.smpl$var_model)
-    
-    #assign krigged data to the raster
-    r_krig<-raster(dat.krg.chil)
-    r.m.chill <- mask(r_krig, SA)
-    r.m.chill<-max(r.m.chill,0)
-    
-    raster_model_adjust <- setExtent(raster_model_adjust, extent(r.m.chill)) 
-    
-    #adjust the chill portions, prevent that chill portions become lower than zero
-    r<-max(r.m.chill+raster_model_adjust,0)
-    r.m <- mask(r, SA)
-    
-    # evaluation of interpolation result   ---------------------------------
-    
-    # The step to follow generates NA values estimated by the model even for locations not excluded by
-    # the rule of 2 C when comparing Tmin and Tmax from WorldClim and on-site data. The following lines
-    # will attempt to address this issue (TBH: I am not sure if we should keep it as is or fix it).
-    # I found a solution in stackoverflow (https://stackoverflow.com/questions/27562076/if-raster-value-na-search-and-extract-the-nearest-non-na-pixel)
-    # that looks for the nearest value estimated by the model...
-    
-    # Generates a data frame only having the coordinates
-    coords_eval_df <- data.frame(x = as.data.frame(eval_df_original)$Longitude,
-                                 y = as.data.frame(eval_df_original)$Latitude)
-    
-    #extract values from chill map
-    model_estimates_NA <- raster::extract(r.m, coords_eval_df)
-    
-    # Try the approach looking for the nearest non-NA values (take little because it runs over a vector of 22 values)
-    model_estimates <- apply(X = coords_eval_df, MARGIN = 1,
-                             FUN = function(x) r.m@data@values[which.min(replace(distanceFromPoints(r.m, x),
-                                                                                 is.na(r.m), NA))])
-    # Copy the original eval_df
-    eval_df <- eval_df_original
-    
-    # Add both to the eval_df to compare them latter
-    eval_df$model_value_NA <- model_estimates_NA
-    eval_df$model_value <- model_estimates
-    
-    #transform to data frame, only use columns of interest (name, country, chil1981, modelvalue)
-    eval_df <- as.data.frame(eval_df[, c("station_name", "CTRY", scen, "model_value_NA", "model_value")])
-    
-    # Pivot longer for further compatibility
-    eval_df <- pivot_longer(eval_df, scen, names_to = "scenario", values_to = "observed_value")
-    
-    # Generate a big dataframe with multiple scenarios
-    if (scen == scenarions[1]) eval_df_all <- eval_df else eval_df_all <- bind_rows(eval_df_all, eval_df)
+    for (scen in scenarions){
+      
+      #krig the tmin tmax data on a plane
+      model_krig <- Krig(x=as.matrix(stations_clean[,c("min_temp_jul","max_temp_jul")]),
+                         Y=stations_clean[scen])
+      pred <- predictSurface(model_krig)
+      
+      #adjust row and column name of object
+      colnames(pred$z)<-pred$y
+      rownames(pred$z)<-pred$x
+      
+      #save number of rows and cols
+      no_row <- nrow(r.m_min)
+      no_col <- ncol(r.m_min)
+      
+      #transform kriged tmin and tmax to matrix
+      mat_krig_tmin <- matrix(r.m_min, nrow = no_row, ncol = no_col,byrow = T)
+      mat_krig_tmax <- matrix(r.m_max, nrow = no_row, ncol = no_col,byrow = T)
+      mat_real_tmin <- matrix(temp_min.res, nrow = no_row, ncol = no_col,byrow = T)
+      mat_real_tmax <- matrix(temp_max.res, nrow = no_row, ncol = no_col,byrow = T)
+      
+      #transform matrix to vector and bind tmin and tmax
+      t_both <- cbind(as.vector(mat_krig_tmin),as.vector(mat_krig_tmax))
+      t_both_real <- cbind(as.vector(mat_real_tmin),as.vector(mat_real_tmax))
+      
+      #extract the model chill for real and kriged tmin and tmax
+      model_krigged_temp <- sapply(1:nrow(t_both), function(i) get_chill_correction(t_both[i,1], t_both[i,2]))
+      model_real_temp <- sapply(1:nrow(t_both_real), function(i) get_chill_correction(t_both_real[i,1], t_both_real[i,2]))
+      
+      #calculate the adjustment (so the chill, which so far was not capured by krigging)
+      #problem: model_real_temp contains many NA
+      model_adjust <- model_real_temp - model_krigged_temp
+      
+      model_adjust <- matrix(model_adjust,nrow = no_row, ncol = no_col)
+      
+      #transform the matrix back to a grid
+      raster_model_adjust <- raster(model_adjust)
+      raster_model_adjust <- setExtent(raster_model_adjust,bb)
+      crs(raster_model_adjust) <- crs(r.m_min)
+      
+      
+      # Interpolation of chill  ---------------------------------
+      
+      #do interpolation of chill
+      # Define the krigging model for the chill
+      f.1 <- as.formula(paste(scen, "~ Longitude + Latitude"))
+      
+      #old approach to fit semivariogram
+      # # Compute the sample variogram; note that the f.1 trend model is one of the
+      # # parameters passed to variogram(). This tells the function to create the
+      # # variogram on the de-trended data.
+      # var.smpl <- variogram(f.1, train_df, cloud = FALSE)
+      # 
+      # # Compute the variogram model by passing the nugget, sill and range values
+      # # to fit.variogram() via the vgm() function.
+      # dat.fit <- fit.variogram(var.smpl, fit.ranges = FALSE, fit.sills = FALSE,
+      #                          vgm(psill = 275, model="Sph", nugget = 20, range = 1500))
+      
+      #automatical fitting of variogram, so it works also in a loop where the coefficient cannot be adjusted
+      var.smpl <- automap::autofitVariogram(f.1, train_df)
+      #plot(var.smpl)
+      
+      # Perform the krige interpolation (note the use of the variogram model
+      # created in the earlier step)
+      dat.krg.chil <- krige(f.1, train_df, grd, var.smpl$var_model)
+      
+      #assign krigged data to the raster
+      r_krig<-raster(dat.krg.chil)
+      r.m.chill <- mask(r_krig, SA)
+      r.m.chill<-max(r.m.chill,0)
+      
+      raster_model_adjust <- setExtent(raster_model_adjust, extent(r.m.chill)) 
+      
+      #adjust the chill portions, prevent that chill portions become lower than zero
+      r<-max(r.m.chill+raster_model_adjust,0)
+      r.m <- mask(r, SA)
+      
+      # evaluation of interpolation result   ---------------------------------
+      
+      # The step to follow generates NA values estimated by the model even for locations not excluded by
+      # the rule of 2 C when comparing Tmin and Tmax from WorldClim and on-site data. The following lines
+      # will attempt to address this issue (TBH: I am not sure if we should keep it as is or fix it).
+      # I found a solution in stackoverflow (https://stackoverflow.com/questions/27562076/if-raster-value-na-search-and-extract-the-nearest-non-na-pixel)
+      # that looks for the nearest value estimated by the model...
+      
+      # Generates a data frame only having the coordinates
+      coords_eval_df <- data.frame(x = as.data.frame(eval_df_original)$Longitude,
+                                   y = as.data.frame(eval_df_original)$Latitude)
+      
+      #extract values from chill map
+      model_estimates_NA <- raster::extract(r.m, coords_eval_df)
+      
+      # Try the approach looking for the nearest non-NA values (take little because it runs over a vector of 22 values)
+      model_estimates <- apply(X = coords_eval_df, MARGIN = 1,
+                               FUN = function(x) r.m@data@values[which.min(replace(distanceFromPoints(r.m, x),
+                                                                                   is.na(r.m), NA))])
+      # Copy the original eval_df
+      eval_df <- eval_df_original
+      
+      # Add both to the eval_df to compare them latter
+      eval_df$model_value_NA <- model_estimates_NA
+      eval_df$model_value <- model_estimates
+      
+      #transform to data frame, only use columns of interest (name, country, chil1981, modelvalue)
+      eval_df <- as.data.frame(eval_df[, c("station_name", "CTRY", scen, "model_value_NA", "model_value")])
+      
+      # Pivot longer for further compatibility
+      eval_df <- pivot_longer(eval_df, scen, names_to = "scenario", values_to = "observed_value")
+      
+      # Generate a big dataframe with multiple scenarios
+      if (scen == scenarions[1]) eval_df_all <- eval_df else eval_df_all <- bind_rows(eval_df_all, eval_df)
     
     }# end loop according to scenarios
     
@@ -301,8 +303,8 @@ for(rep in 1:repititions){
 # eval_df_final <- transform(eval_df_final, mean_residual=apply(eval_df_final[,4:(4+repititions-1)],1, mean, na.rm = TRUE))
 # eval_df_final <- transform(eval_df_final, sd_residual=apply(eval_df_final[,4:(4+repititions-1)],1, sd, na.rm = TRUE))
 
-# Use tidyverse o summarize the residuals by weather station (mean, median, and sd)
-eval_df_final_summ <- eval_df_final %>% group_by(station_name) %>% 
+# Use tidyverse to summarize the residuals by weather station and scenario (mean, median, and sd)
+eval_df_final_summ <- eval_df_final %>% group_by(station_name, scenario) %>% 
   
   summarize(mean_res = mean(residual),
             median_res = median(residual),
@@ -310,7 +312,6 @@ eval_df_final_summ <- eval_df_final %>% group_by(station_name) %>%
 
 
 
-################# AQUÍ VOY POR AHORA
 
 
 
