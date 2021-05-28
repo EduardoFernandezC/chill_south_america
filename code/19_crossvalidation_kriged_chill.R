@@ -23,7 +23,7 @@ library(data.table)#rbindlist function
 #set height and width (cm) of maps when maps are saved
 
 #number of repeats
-repititions <- 3
+repititions <- 5
 #number of splits of data set (usually between 5 and 10)
 k <- 7
 
@@ -99,7 +99,7 @@ stations_clean <- as.data.frame(subset(stations, !(outlier_tmin_jul | outlier_tm
 for(rep in 1 : repititions){
 
   #split data set in k even groups
-  split_df <- split(stations_clean, sample(1:k, nrow(stations_clean), replace=T))
+  split_df <- split(stations_clean, sample(1 : k, nrow(stations_clean), replace = T))
   
   #create empty list in which the values are stored
   eval_list <- vector(mode = "list", length = k)
@@ -167,11 +167,11 @@ for(rep in 1 : repititions){
     # Set up correction model  ---------------------------------
   
     #loop for scenarions
-    for (scen in scenarions){
+    for (scen in scenarions[1]){
       
       #krig the tmin tmax data on a plane
-      model_krig <- Krig(x=as.matrix(stations_clean[,c("min_temp_jul","max_temp_jul")]),
-                         Y=stations_clean[scen])
+      model_krig <- Krig(x = as.matrix(as.data.frame(train_df)[, c("min_temp_jul", "max_temp_jul")]),
+                         Y = as.data.frame(train_df)[scen])
       pred <- predictSurface(model_krig)
       
       #adjust row and column name of object
@@ -257,24 +257,19 @@ for(rep in 1 : repititions){
                                    y = as.data.frame(eval_df_original)$Latitude)
       
       #extract values from chill map
-      model_estimates_NA <- raster::extract(r.m, coords_eval_df)
+      model_estimates <- raster::extract(r.m, coords_eval_df, method = "bilinear")
       
-      # Try the approach looking for the nearest non-NA values (take little because it runs over a vector of 22 values)
-      model_estimates <- apply(X = coords_eval_df, MARGIN = 1,
-                               FUN = function(x) r.m@data@values[which.min(replace(distanceFromPoints(r.m, x),
-                                                                                   is.na(r.m), NA))])
       # Copy the original eval_df
       eval_df <- eval_df_original
       
-      # Add both to the eval_df to compare them latter
-      eval_df$model_value_NA <- model_estimates_NA
+      # Add the model estimates eval_df to compare them latter
       eval_df$model_value <- model_estimates
       
       #transform to data frame, only use columns of interest (name, country, chil1981, modelvalue)
-      eval_df <- as.data.frame(eval_df[, c("station_name", "CTRY", scen, "model_value_NA", "model_value")])
+      eval_df <- as.data.frame(eval_df[, c("station_name", "CTRY", scen, "model_value")])
       
       # Pivot longer for further compatibility
-      eval_df <- pivot_longer(eval_df, scen, names_to = "scenario", values_to = "observed_value")
+      eval_df <- pivot_longer(eval_df, all_of(scen), names_to = "scenario", values_to = "observed_value")
       
       # Generate a big dataframe with multiple scenarios
       if (scen == scenarions[1]) eval_df_all <- eval_df else eval_df_all <- bind_rows(eval_df_all, eval_df)
@@ -299,6 +294,13 @@ for(rep in 1 : repititions){
   if(rep == 1) eval_df_final <- eval_df_all else eval_df_final <- bind_rows(eval_df_final, eval_df_all)
 }
 
+# Save the final data frame after running the loop with 3 repetitions for all the scenarios
+write.csv(eval_df_final, "data/cross_validation_raw.csv", row.names = FALSE)
+
+# Load the file from folder
+
+eval_df_final <- read.csv("data/cross_validation_raw.csv")
+
 #summarise residuals, select only columns with residual values
 # eval_df_final <- transform(eval_df_final, mean_residual=apply(eval_df_final[,4:(4+repititions-1)],1, mean, na.rm = TRUE))
 # eval_df_final <- transform(eval_df_final, sd_residual=apply(eval_df_final[,4:(4+repititions-1)],1, sd, na.rm = TRUE))
@@ -306,23 +308,20 @@ for(rep in 1 : repititions){
 # Use tidyverse to summarize the residuals by weather station and scenario (mean, median, and sd)
 eval_df_final_summ <- eval_df_final %>% group_by(station_name, scenario) %>% 
   
-  summarize(mean_res = mean(residual),
-            median_res = median(residual),
-            sd = sd(residual))
+  summarize(mean_res = mean(residual, na.rm = TRUE),
+            median_res = median(residual, na.rm = TRUE),
+            sd = sd(residual, na.rm = TRUE))
 
 
-
-
-
-
-#add longitude and latitude to df
-eval_df_final <- merge.data.frame(eval_df_final,stations[,c(1,3,4,7)],by=c("station_name","X1981"),all.x = TRUE)
-
-#save results
-write.csv(eval_df_final,"data/cross_validation.csv",row.names = F)
+# The same as above but using only weather stations
+eval_df_final_summ_WS <- eval_df_final %>% group_by(station_name) %>% 
+  
+  summarize(mean_res = mean(residual, na.rm = TRUE),
+            median_res = median(residual, na.rm = TRUE),
+            sd = sd(residual, na.rm = TRUE))
 
 #get general stats of residuals
-summary(eval_df_final)
+summary(eval_df_final_summ_WS)
 
 eval_melt <- melt(as.data.table(eval_df_final),id.vars=c('station_name','CTRY','X1981','Latitude','Longitude'))
 eval_melt %>%
