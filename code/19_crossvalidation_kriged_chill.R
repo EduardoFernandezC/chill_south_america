@@ -166,8 +166,8 @@ for(rep in 1 : repititions){
     
     # Set up correction model  ---------------------------------
   
-    #loop for scenarions
-    for (scen in scenarions[1]){
+    #loop for scenarios
+    for (scen in scenarions){
       
       #krig the tmin tmax data on a plane
       model_krig <- Krig(x = as.matrix(as.data.frame(train_df)[, c("min_temp_jul", "max_temp_jul")]),
@@ -306,7 +306,7 @@ eval_df_final <- read.csv("data/cross_validation_raw.csv")
 # eval_df_final <- transform(eval_df_final, sd_residual=apply(eval_df_final[,4:(4+repititions-1)],1, sd, na.rm = TRUE))
 
 # Use tidyverse to summarize the residuals by weather station and scenario (mean, median, and sd)
-eval_df_final_summ <- eval_df_final %>% group_by(station_name, scenario) %>% 
+eval_df_final_summ <- eval_df_final %>% group_by(station_name, CTRY, Longitude, Latitude, scenario) %>% 
   
   summarize(mean_res = mean(residual, na.rm = TRUE),
             median_res = median(residual, na.rm = TRUE),
@@ -314,7 +314,7 @@ eval_df_final_summ <- eval_df_final %>% group_by(station_name, scenario) %>%
 
 
 # The same as above but using only weather stations
-eval_df_final_summ_WS <- eval_df_final %>% group_by(station_name) %>% 
+eval_df_final_summ_WS <- eval_df_final %>% group_by(station_name, CTRY, Longitude, Latitude) %>% 
   
   summarize(mean_res = mean(residual, na.rm = TRUE),
             median_res = median(residual, na.rm = TRUE),
@@ -323,38 +323,55 @@ eval_df_final_summ_WS <- eval_df_final %>% group_by(station_name) %>%
 #get general stats of residuals
 summary(eval_df_final_summ_WS)
 
-eval_melt <- melt(as.data.table(eval_df_final),id.vars=c('station_name','CTRY','X1981','Latitude','Longitude'))
-eval_melt %>%
-  filter(!(variable %in% c('mean_resiudal','sd_residual')))%>%
-  ggplot(aes(y=value,x=CTRY))+
-  geom_boxplot()+
-  theme_bw()+
-  ylab('Residual (Observation - Prediction)')+
-  xlab('Country')
-
-eval_melt %>%
-  filter((variable == 'mean_residual'))%>%
-  ggplot(aes(y=value,x=CTRY))+
-  geom_boxplot()+
-  theme_bw()+
-  ylab('Mean Residual (Observation - Prediction)')+
-  xlab('Country')
-
-#save also absolute resiudal value for size of bubbles in plot
-eval_df_final$abs_residual <- abs(eval_df_final$mean_residual)
 
 
-#
-eval_df_final <-  SpatialPointsDataFrame(eval_df_final[,c("Longitude","Latitude")],
-                       proj4string=CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"),
-                       data=eval_df_final[,c(1:3,9,13)])
+# eval_melt <- melt(as.data.table(eval_df_final), id.vars = c('station_name','CTRY','X1981','Latitude','Longitude'))
+# eval_melt %>%
+#   filter(!(variable %in% c('mean_resiudal','sd_residual')))%>%
+#   ggplot(aes(y=value,x=CTRY))+
+#   geom_boxplot()+
+#   theme_bw()+
+#   ylab('Residual (Observation - Prediction)')+
+#   xlab('Country')
+# 
+# eval_melt %>%
+#   filter((variable == 'mean_residual'))%>%
+#   ggplot(aes(y=value,x=CTRY))+
+#   geom_boxplot()+
+#   theme_bw()+
+#   ylab('Mean Residual (Observation - Prediction)')+
+#   xlab('Country')
+# 
+# #save also absolute resiudal value for size of bubbles in plot
+# eval_df_final$abs_residual <- abs(eval_df_final$mean_residual)
 
-chill_residual <- tm_shape(SA)+
-  tm_borders(col = 'black')+
-  tm_shape(eval_df_final) + 
-  tm_bubbles(size = 'abs_residual',col = 'mean_residual', palette=get_brewer_pal("RdBu"),
-             midpoint = 0, breaks=seq(-20,10,by=5))+
-  tm_grid()+ 
-  tm_layout(legend.outside=T,outer.margins = c(0.001,0.001,0,0.001))
+
+# Plot the residuals by weather station
+eval_df_final_sp <-  SpatialPointsDataFrame(eval_df_final_summ_WS[, c("Longitude", "Latitude")],
+                                            proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"),
+                                            data = eval_df_final_summ_WS[, -(which(colnames(eval_df_final_summ_WS) %in% 
+                                                                            c("Longitude", "Latitude")))])
+# Identify the NAs from the cross validation procedure
+NAs_cross_validation <- as.data.frame(eval_df_final_sp[which(is.na(eval_df_final_sp$median_res)), ])[["station_name"]]
+
+chill_residual <- tm_shape(SA) +
+  tm_borders(col = 'grey40') +
+  tm_graticules(lines = FALSE, labels.size = 0.6) +
+  tm_shape(eval_df_final_sp) +
+  tm_bubbles(col = 'median_res', size = 'sd', palette = get_brewer_pal("RdBu"),
+             midpoint = 0, style = "cont", breaks = seq(-40, 10, 5), legend.col.reverse = TRUE,
+             title.size = "SD residual (CP)", title.col = "Median residual (CP)") + 
+  tm_shape(Porig[which(Porig$station_name %in% NAs_cross_validation), ]) +
+  tm_symbols(size = 0.2, shape = 4, col = 'black') +
+  tm_add_legend(type = "symbol", labels = "Missing", col = "black", shape = 4, size = 0.5) +
+  tm_compass(position = c(0.67, 0.09), text.size = 0.5) +
+  tm_scale_bar(position = c(0.57, 0.01), bg.color = 'transparent', text.size = 0.5) +
+  tm_layout(legend.outside = T,
+            outer.margins = c(0.001, 0.001, 0.001, 0.001),
+            legend.title.size = 0.7,
+            legend.text.size = 0.5)
+
 chill_residual
-tmap_save(chill_residual, filename = 'figures/cross-validation/residual_corrected-krig.jpg',height = 13,width=12,units = 'cm')
+
+tmap_save(chill_residual, 'figures/cross-validation/residual_corrected-krig.png',
+          height = 12, width = 11, units = 'cm')

@@ -1,4 +1,5 @@
 library(ggplot2)
+library(tmap)
 
 # Plot the first map only with GSOD weather stations ====
 
@@ -81,6 +82,57 @@ ggplot() + SA_countries +
                  st.bottom = TRUE, st.size = 2.5, st.dist = 0.03, border.size = 0.3) 
 
 ggsave("figures/figure_1.png", height = 5.05, width = 6.5, dpi = 600)
+
+
+# Remake figure 1 using tmap
+
+stations <- read.csv("data/weather_info.csv")
+
+# Add the data base column
+
+stations[!is.na(stations$chillR_code), "Database"] <- "GSOD"
+stations[is.na(stations$chillR_code) & !is.na(stations$Cod_Station), "Database"] <- "CR2"
+stations[is.na(stations$chillR_code) & !is.na(stations$Perc_Tmin), "Database"] <- "SMN - INTA"
+
+# Transform the data frame into a spatial data frame
+
+stations_sp <-  SpatialPointsDataFrame(stations[, c("Longitude", "Latitude")],
+                                            proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"),
+                                            data = stations[, -(which(colnames(stations) %in% 
+                                                                                     c("Longitude", "Latitude")))])
+
+
+# Read the shape file from SA
+SA <- readOGR('data/sa_outline/SA_outline.shp')
+
+# Replace point boundary extent with that of South America to make sure the interpolation is done for the whole extend of south america
+stations_sp@bbox <- SA@bbox
+
+# Create the map
+
+stations_map <- tm_shape(SA) +
+  tm_borders(col = 'grey40') +
+  tm_fill(col = 'goldenrod') +
+  tm_graticules(lines = FALSE, labels.size = 0.6) +
+  tm_shape(stations_sp[stations_sp$Database == "GSOD", ]) +
+  tm_symbols(size = 0.2, shape = 2, col = 'black') +
+  tm_shape(stations_sp[stations_sp$Database == "CR2", ]) +
+  tm_symbols(size = 0.2, shape = 1, col = 'black') +
+  tm_shape(stations_sp[stations_sp$Database == "SMN - INTA", ]) +
+  tm_symbols(size = 0.2, shape = 3, col = 'black') +
+  tm_compass(position = c(0.68, 0.09), text.size = 0.5) +
+  tm_scale_bar(position = c(0.57, 0.01), bg.color = 'transparent', text.size = 0.5) +
+  tm_add_legend(type = "symbol", labels = c("GSOD", expression("[CR]"^2), "SMN - INTA"),
+                col = "black", shape = c(2, 1, 3), size = 0.5, title = "Database") +
+  tm_layout(legend.outside = FALSE,
+            legend.position = c(0.7, 0.2),
+            outer.margins = c(0.001, 0.001, 0.001, 0.001))
+
+stations_map
+
+tmap_save(stations_map, 'figures/final_figures/figure_1_tmap.png',
+          height = 12, width = 11, units = 'cm')
+
 
 
 
