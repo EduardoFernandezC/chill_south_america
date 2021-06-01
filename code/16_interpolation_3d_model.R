@@ -159,8 +159,8 @@ get_chill_correction <-  function(tmin, tmax, lookup = pred){
 chill_list <- list()
 
 #set height and width (cm) of maps when maps are saved
-height <- 13
-width <- 12
+height <- 12
+width <- 11
 
 for(scen in scenarions){
   
@@ -317,25 +317,28 @@ for(scen in scenarions){
   r.m <- mask(r, SA)
   
   chill_list <- append(chill_list, r.m)
-  
 
-  f_name <- paste('figures/interpolation/adjusted_chill_', scen, '.jpg', sep = '')
+  f_name <- paste('figures/interpolation/adjusted_chill_', scen, '.png', sep = '')
   
   chill_map <- tm_shape(SA_test) +
     tm_lines(col='grey') +
     tm_shape(r.m) +
     tm_raster(palette = get_brewer_pal("RdBu", contrast = c(0, 0.75)),
               midpoint = 30, 
-              title = paste(scen, "\nSafe Winter Chill \n(Chill Portions)\nCorrected for Tmin, Tmax", sep = ''),
+              title = "Safe Winter Chill\n         (CP)",
               breaks = seq(0, 100, by = 10), style = "cont", legend.reverse = TRUE) +
     tm_shape(Porig) + 
     tm_symbols(size = 0.2, shape = 4, col = 'black') +
     tm_shape(SA) +
-    tm_borders(col = 'black') +
-    tm_graticules(lines = F) +
-    tm_compass(position = c(0.64, 0.1)) +
-    tm_scale_bar(position = c(0.58, 0.01), bg.color = 'white') +
-    tm_layout(legend.outside = T, outer.margins = c(0.001, 0.001, 0, 0.001))
+    tm_borders(col = 'grey40') +
+    tm_graticules(lines = F, labels.size = 0.6) +
+    tm_compass(position = c(0.67, 0.85), text.size = 0.6) +
+    tm_scale_bar(position = c(0.57, 0.925), bg.color = 'transparent', text.size = 0.6) +
+    tm_layout(legend.outside = F,
+              legend.text.size = 0.8,
+              legend.title.size = 1.2,
+              legend.height = 0.3,
+              outer.margins = c(0.001, 0.001, 0.001, 0.001))
   
   chill_map
   
@@ -343,27 +346,31 @@ for(scen in scenarions){
   
   new_seq <- seq(-50, 90, by = 10)
   
-  f_name <- paste('figures/interpolation/chill_correction_', scen, '.jpg', sep = '')
+  f_name <- paste('figures/interpolation/chill_correction_', scen, '.png', sep = '')
   
   chill_correction <- tm_shape(SA_test) +
-    tm_lines(col = "grey50") +
+    tm_lines(col = "grey") +
     tm_shape(raster_model_adjust) +
     tm_raster(palette = get_brewer_pal("RdBu", contrast = c(0, 0.75)),
               midpoint = 0,
-              title = paste(scen, "\nCorrection of\nwinter chill (Chill Portions)", sep = ''),
+              title = "Safe Winter Chill correction\n                 (CP)",
               breaks = new_seq, style = "cont", legend.reverse = TRUE) +
     tm_shape(Porig) +
     tm_symbols(size = 0.2, shape = 4, col = 'black') +
     tm_shape(SA) +
-    tm_borders(col = 'black') +
-    tm_graticules(lines = F) +
-    tm_compass(position = c(0.64, 0.1)) +
-    tm_scale_bar(position = c(0.58, 0.01), bg.color = 'white') +
-    tm_layout(legend.outside = T, outer.margins = c(0.001, 0.001, 0, 0.001))
+    tm_borders(col = 'grey40') +
+    tm_graticules(lines = F, labels.size = 0.6) +
+    tm_compass(position = c(0.67, 0.85), text.size = 0.6) +
+    tm_scale_bar(position = c(0.57, 0.925), bg.color = 'transparent', text.size = 0.6) +
+    tm_layout(legend.outside = F,
+              legend.text.size = 0.8,
+              legend.title.size = 1.2,
+              legend.height = 0.3,
+              outer.margins = c(0.001, 0.001, 0.001, 0.001))
   
   chill_correction
   
-  tmap_save(chill_correction, filename = f_name,height = height, width = width, units = 'cm')  
+  tmap_save(chill_correction, filename = f_name, height = height, width = width, units = 'cm')  
 } #end of loop to create interpolation maps
 
 #########################
@@ -382,56 +389,57 @@ median_raster_scen <- calc(brick_raster, median)
 #loop for change 2017 to future scenarios
 for(scen in scenarions[12 : 23]){
   #create file name
-  f_name <- paste('figures/interpolation/change_hist_sim_vs_', scen, '.jpg', sep = '')
-  
-  #split scenario name because so long
-  x <- strsplit(scen, split = '_')
+  f_name <- paste('figures/interpolation/change_hist_sim_vs_', scen, '.png', sep = '')
   
   change_map <- tm_shape(SA_test) +
     tm_lines(col = 'grey') +
     tm_shape(chill_list[[scen]] - median_raster_scen) +
     tm_raster(palette = get_brewer_pal("RdBu", contrast = c(0, 0.75)),
               midpoint = 0,
-              title = paste('Median historic simulated to ', x[[1]][2], '\n', x[[1]][1], ' ',
-                            x[[1]][3], '\nchange in chill portions', sep = ''),
+              title = 'SWC relative to\n 1981 - 2017\n       (CP)',
               breaks = seq(-60, 10, by = 10), style = "cont", legend.reverse = TRUE) +
     tm_shape(Porig) +
     tm_symbols(size = 0.2, shape = 4, col = 'black') +
     tm_shape(SA) +
-    tm_borders(col = 'black') +
-    tm_graticules(lines = F) +
-    tm_compass(position = c(0.64, 0.1)) +
-    tm_scale_bar(position = c(0.58, 0.01), bg.color = 'white') +
-    tm_layout(legend.outside = T, outer.margins = c(0.001, 0.001, 0, 0.001))
+    tm_borders(col = 'grey40') +
+    tm_graticules(lines = F, labels.size = 0.6) +
+    tm_compass(position = c(0.67, 0.85), text.size = 0.6) +
+    tm_scale_bar(position = c(0.57, 0.925), bg.color = 'transparent', text.size = 0.6) +
+    tm_layout(legend.outside = F,
+              legend.text.size = 0.8,
+              legend.title.size = 1.2,
+              legend.height = 0.3,
+              outer.margins = c(0.001, 0.001, 0.001, 0.001))
   
   change_map
   
-  tmap_save(change_map, filename = f_name,height = height, width = width, units = 'cm')  
+  tmap_save(change_map, filename = f_name, height = height, width = width, units = 'cm')  
   
 }
 
 #calculate change 1981 to 2017 (2017 minus 1981)
 scen <- scenarions[2]
-f_name <- paste('figures/interpolation/change_2017_', scen, '.jpg', sep = '')
-
-#split scenario name because so long
-x <- strsplit(scen, split = '_')
+f_name <- paste('figures/interpolation/change_2017_', scen, '.png', sep = '')
 
 change_map <- tm_shape(SA_test) +
   tm_lines(col = 'grey') +
   tm_shape(chill_list[["scen_2017"]] - chill_list[[scen]]) +
   tm_raster(palette = get_brewer_pal("RdBu", contrast = c(0, 0.75)),
             midpoint = 0,
-            title = '1981 to 2017\nChange in chill portions',
-            style = "cont", legend.reverse = TRUE) +
+            title = 'SWC relative to\n    1981 (CP)',
+            style = "cont", legend.reverse = TRUE, breaks = seq(-10, 10, by = 5)) +
   tm_shape(Porig) +
   tm_symbols(size = 0.2, shape = 4, col = 'black') + 
   tm_shape(SA) +
-  tm_borders(col = 'black') +
-  tm_graticules(lines = F) +
-  tm_compass(position = c(0.64, 0.1)) +
-  tm_scale_bar(position = c(0.58, 0.01), bg.color = 'white') +
-  tm_layout(legend.outside = T, outer.margins = c(0.001, 0.001, 0, 0.001))
+  tm_borders(col = 'grey40') +
+  tm_graticules(lines = F, labels.size = 0.6) +
+  tm_compass(position = c(0.67, 0.85), text.size = 0.6) +
+  tm_scale_bar(position = c(0.57, 0.925), bg.color = 'transparent', text.size = 0.6) +
+  tm_layout(legend.outside = F,
+            legend.text.size = 0.8,
+            legend.title.size = 1,
+            legend.height = 0.3,
+            outer.margins = c(0.001, 0.001, 0.001, 0.001))
 
 change_map
 
