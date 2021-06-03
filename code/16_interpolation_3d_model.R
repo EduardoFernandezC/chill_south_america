@@ -180,6 +180,9 @@ chill_list <- list()
 # Create a plot list
 plot_list <- list()
 
+# List for Chile
+chile_list <- list()
+
 #set height and width (cm) of maps when maps are saved
 height <- 12
 width <- 11
@@ -346,24 +349,25 @@ for(scen in scenarions){
     tm_shape(r.m) +
     tm_raster(palette = get_brewer_pal("RdBu", contrast = c(0, 0.75)),
               midpoint = 30, 
-              title = "Safe Winter Chill\n         (CP)",
-              breaks = seq(0, 100, by = 20), style = "cont", legend.reverse = TRUE) +
+              title = "Safe Winter Chill",
+              breaks = seq(0, 100, by = 20), style = "cont", legend.reverse = TRUE,
+              legend.format = list(suffix = " CP", text.align = "center")) +
     tm_shape(Porig) + 
-    tm_symbols(size = 0.2, shape = 4, col = 'black') +
+    tm_symbols(size = 0.075, shape = 4, col = 'black', alpha = 0.6) +
     tm_shape(SA) +
     tm_borders(col = 'grey40') +
     tm_graticules(lines = F, labels.size = 0.6) +
     tm_compass(position = c(0.67, 0.85), text.size = 0.6) +
     tm_scale_bar(position = c(0.57, 0.925), bg.color = 'transparent', text.size = 0.6) +
     tm_add_legend(type = "line", labels = "Excluded", col = "grey", lwd = 3) +
+    tm_add_legend(type = "symbol", labels = "  Weather station", shape = 4, size = 0.5) +
     tm_layout(main.title = paste0("      ", scenarios_fixed[[scen]]),
               main.title.position = "center",
-              main.title.size = 1.5,
+              main.title.size = 1.4,
               legend.outside = F,
-              legend.position = c(0.67, 0.005),
-              legend.text.size = 0.9,
-              legend.title.size = 1.1,
-              legend.height = 0.4,
+              legend.title.size = 0.85,
+              legend.text.size = 0.65,
+              legend.position = c(0.665, 0.005),
               outer.margins = c(0.001, 0.001, 0.001, 0.001))
   
   chill_map
@@ -371,6 +375,46 @@ for(scen in scenarions){
   plot_list <- append(plot_list, list(chill_map))
   
   #tmap_save(chill_map, filename = f_name, height = height, width = width, units = 'cm')  
+  
+  
+  # Zoom-in Chile and Argentina
+  b <- bbox(Porig)
+  b[1, ] <- c(-81, -55)
+  b[2, ] <- c(-45, -25)
+  b <- bbox(t(b))
+  
+  chile <- tm_shape(SA_test, bbox = b) +
+    tm_lines(col = 'grey') +
+    tm_shape(r.m, bbox = b) +
+    tm_raster(palette = get_brewer_pal("RdBu", contrast = c(0, 0.75)),
+              midpoint = 30,
+              title = 'Safe Winter Chill',
+              style = "cont", legend.reverse = TRUE, breaks = seq(0, 100, by = 20),
+              legend.format = list(suffix = " CP", text.align = "center")) +
+    tm_shape(Porig, bbox = b) +
+    tm_symbols(size = 0.085, shape = 4, col = 'black', alpha = 0.6) + 
+    tm_shape(SA, bbox = b) +
+    tm_borders(col = 'grey40') +
+    tm_graticules(lines = F, labels.size = 0.6) +
+    tm_compass(position = c(0.7, 0.08), text.size = 0.6) +
+    tm_scale_bar(position = c(0.5675, 0), bg.color = 'transparent', text.size = 0.6) +
+    tm_add_legend(type = "line", labels = "Excluded", col = "grey", lwd = 3) +
+    tm_add_legend(type = "symbol", labels = "  Weather station", shape = 4, size = 0.5) +
+    tm_layout(main.title = paste0("      ", scenarios_fixed[[scen]]),
+              main.title.position = "center",
+              main.title.size = 1.4,
+              legend.outside = F,
+              legend.title.size = 0.9,
+              legend.text.size = 0.7,
+              legend.position = c(0.001, 0.58),
+              outer.margins = c(0.001, 0.001, 0.001, 0.001))
+  
+  chile
+  
+  chile_list <- append(chile_list, list(chile))
+  
+  #tmap_save(chile, filename = f_name, height = height, width = width, units = 'cm')  
+  
   
   new_seq <- seq(-50, 90, by = 10)
   
@@ -410,6 +454,7 @@ for(scen in scenarions){
 #change names in list to scenario names
 names(chill_list) <- scenarions
 names(plot_list) <- scenarions
+names(chile_list) <- scenarions
 
 # Generate a baseline raster scenario based on the median across historic simulated scenarios
 brick_raster <- brick(chill_list[2 : 11])
@@ -430,24 +475,25 @@ for(scen in scenarions[12 : 23]){
     tm_shape(chill_list[[scen]] - median_raster_scen) +
     tm_raster(palette = get_brewer_pal("RdBu", contrast = c(0, 0.75)),
               midpoint = 0,
-              title = 'SWC relative to\n 1981 - 2017\n       (CP)',
-              breaks = seq(-60, 10, by = 20), style = "cont", legend.reverse = TRUE) +
+              title = 'SWC relative to\n 1981 - 2017',
+              breaks = seq(-60, 10, by = 20), style = "cont", legend.reverse = TRUE,
+              legend.format = list(suffix = " CP", text.align = "center")) +
     tm_shape(Porig) +
-    tm_symbols(size = 0.2, shape = 4, col = 'black') +
+    tm_symbols(size = 0.075, shape = 4, col = 'black', alpha = 0.6) +
     tm_shape(SA) +
     tm_borders(col = 'grey40') +
     tm_graticules(lines = F, labels.size = 0.6) +
     tm_compass(position = c(0.67, 0.85), text.size = 0.6) +
     tm_scale_bar(position = c(0.57, 0.925), bg.color = 'transparent', text.size = 0.6) +
     tm_add_legend(type = "line", labels = "Excluded", col = "grey", lwd = 3) +
+    tm_add_legend(type = "symbol", labels = "  Weather station", shape = 4, size = 0.5) +
     tm_layout(main.title = paste0("      ", scenarios_fixed[[scen]]),
               main.title.position = "center",
               main.title.size = 1.4,
               legend.outside = F,
-              legend.position = c(0.68, 0.005),
-              legend.text.size = 0.9,
-              legend.title.size = 1,
-              legend.height = 0.41,
+              legend.title.size = 0.85,
+              legend.text.size = 0.65,
+              legend.position = c(0.665, 0.005),
               outer.margins = c(0.001, 0.001, 0.001, 0.001))
   
   change_map
@@ -473,24 +519,25 @@ change_map <- tm_shape(SA_test) +
   tm_shape(chill_list[["scen_2017"]] - chill_list[[scen]]) +
   tm_raster(palette = get_brewer_pal("RdBu", contrast = c(0, 0.75)),
             midpoint = 0,
-            title = 'Safe Winter Chill\n          (CP)',
-            style = "cont", legend.reverse = TRUE, breaks = seq(-15, 10, by = 5)) +
+            title = 'Safe Winter Chill',
+            style = "cont", legend.reverse = TRUE, breaks = seq(-15, 10, by = 5),
+            legend.format = list(suffix = " CP", text.align = "center")) +
   tm_shape(Porig) +
-  tm_symbols(size = 0.2, shape = 4, col = 'black') + 
+  tm_symbols(size = 0.075, shape = 4, col = 'black', alpha = 0.6) + 
   tm_shape(SA) +
   tm_borders(col = 'grey40') +
   tm_graticules(lines = F, labels.size = 0.6) +
   tm_compass(position = c(0.67, 0.85), text.size = 0.6) +
   tm_scale_bar(position = c(0.57, 0.925), bg.color = 'transparent', text.size = 0.6) +
   tm_add_legend(type = "line", labels = "Excluded", col = "grey", lwd = 3) +
+  tm_add_legend(type = "symbol", labels = "  Weather station", shape = 4, size = 0.5) +
   tm_layout(main.title = "      Chill change 1981 - 2017",
             main.title.position = "center",
-            main.title.size = 1.5,
+            main.title.size = 1.4,
             legend.outside = F,
-            legend.position = c(0.67, 0.005),
-            legend.text.size = 0.9,
-            legend.title.size = 1.1,
-            legend.height = 0.4,
+            legend.title.size = 0.85,
+            legend.text.size = 0.65,
+            legend.position = c(0.665, 0.005),
             outer.margins = c(0.001, 0.001, 0.001, 0.001))
 
 change_map
