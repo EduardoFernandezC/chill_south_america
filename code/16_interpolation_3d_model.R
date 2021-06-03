@@ -76,6 +76,25 @@ proj4string(grd) <- proj4string(Porig)
 #save scenario names to vector
 scenarions <- colnames(stations)[6 : 28]
 
+# Create good scenario names to use in the main title of the plot
+scenarios_fixed <- c(observed_SWC = "Historic observed", scen_1981 = "Historic simulated (1981)",
+                     scen_1985 =  "Historic simulated (1985)", scen_1989 = "Historic simulated (1989)",
+                     scen_1993 = "Historic simulated (1993)", scen_1997 = "Historic simulated (1997)",
+                     scen_2001 = "Historic simulated (2001)", scen_2005 = "Historic simulated (2005)",
+                     scen_2009 = "Historic simulated (2009)", scen_2013 = "Historic simulated (2013)",
+                     scen_2017 = "Historic simulated (2017)", rcp45_2050_pessimistic = "RCP4.5 - 2050 pessimistic",
+                     rcp45_2050_intermediate = "RCP4.5 - 2050 intermediate",
+                     rcp45_2050_optimistic = "RCP4.5 - 2050 optimistic",
+                     rcp45_2085_pessimistic = "RCP4.5 - 2085 pessimistic",
+                     rcp45_2085_intermediate = "RCP4.5 - 2085 intermediate",
+                     rcp45_2085_optimistic = "RCP4.5 - 2085 optimistic",
+                     rcp85_2050_pessimistic = "RCP8.5 - 2050 pessimistic",
+                     rcp85_2050_intermediate = "RCP8.5 - 2050 intermediate",
+                     rcp85_2050_optimistic = "RCP8.5 - 2050 optimistic",
+                     rcp85_2085_pessimistic = "RCP8.5 - 2085 pessimistic",
+                     rcp85_2085_intermediate = "RCP8.5 - 2085 pessimistic",
+                     rcp85_2085_optimistic = "RCP8.5 - 2085 optimistic"  )
+
 #load tmin and tmax map for july
 min_temp_jul <- raster('data/world_clim/wc2-2/wc2.1_30s_tmin_07.tif')
 max_temp_jul <- raster('data/world_clim/wc2-3/wc2.1_30s_tmax_07.tif')
@@ -158,6 +177,9 @@ get_chill_correction <-  function(tmin, tmax, lookup = pred){
 #create empty list which is used to store chill values
 chill_list <- list()
 
+# Create a plot list
+plot_list <- list()
+
 #set height and width (cm) of maps when maps are saved
 height <- 12
 width <- 11
@@ -196,19 +218,18 @@ for(scen in scenarions){
                                     z = NULL),
                size = 0.7) +
     geom_text_contour(stroke = 0.2, size = 2) +
-    labs(title = scen) +
     ylab('Monthly maximum temperature in July (°C)') +
     xlab('Monthly minimum temperature in July (°C)') +
     theme_bw(base_size = 12) +
     theme(legend.title.align = 0.5,
-          legend.position = c(0.875, 0.25),
+          legend.position = c(0.875, 0.3),
           legend.background = element_blank())
   
-  cowplot::ggdraw(align_legend(correction_plane)) 
+  correction_plane <- cowplot::ggdraw(align_legend(correction_plane)) 
   
-  ggsave(plot = correction_plane,
-         filename = paste('figures/interpolation/correction_plane_', scen, '.jpg', sep = ''),
-         height = 10, width = 15, units = 'cm')
+  # ggsave(plot = correction_plane,
+  #        filename = paste('figures/interpolation/correction_plane_', scen, '.jpg', sep = ''),
+  #        height = 10, width = 15, units = 'cm')
   
   #save number of rows and cols
   no_row <- nrow(r.m_min)
@@ -321,12 +342,12 @@ for(scen in scenarions){
   f_name <- paste('figures/interpolation/adjusted_chill_', scen, '.png', sep = '')
   
   chill_map <- tm_shape(SA_test) +
-    tm_lines(col='grey') +
+    tm_lines(col = "grey") +
     tm_shape(r.m) +
     tm_raster(palette = get_brewer_pal("RdBu", contrast = c(0, 0.75)),
               midpoint = 30, 
               title = "Safe Winter Chill\n         (CP)",
-              breaks = seq(0, 100, by = 10), style = "cont", legend.reverse = TRUE) +
+              breaks = seq(0, 100, by = 20), style = "cont", legend.reverse = TRUE) +
     tm_shape(Porig) + 
     tm_symbols(size = 0.2, shape = 4, col = 'black') +
     tm_shape(SA) +
@@ -334,15 +355,22 @@ for(scen in scenarions){
     tm_graticules(lines = F, labels.size = 0.6) +
     tm_compass(position = c(0.67, 0.85), text.size = 0.6) +
     tm_scale_bar(position = c(0.57, 0.925), bg.color = 'transparent', text.size = 0.6) +
-    tm_layout(legend.outside = F,
-              legend.text.size = 0.8,
-              legend.title.size = 1.2,
-              legend.height = 0.3,
+    tm_add_legend(type = "line", labels = "Excluded", col = "grey", lwd = 3) +
+    tm_layout(main.title = paste0("      ", scenarios_fixed[[scen]]),
+              main.title.position = "center",
+              main.title.size = 1.5,
+              legend.outside = F,
+              legend.position = c(0.67, 0.005),
+              legend.text.size = 0.9,
+              legend.title.size = 1.1,
+              legend.height = 0.4,
               outer.margins = c(0.001, 0.001, 0.001, 0.001))
   
   chill_map
   
-  tmap_save(chill_map, filename = f_name, height = height, width = width, units = 'cm')  
+  plot_list <- append(plot_list, list(chill_map))
+  
+  #tmap_save(chill_map, filename = f_name, height = height, width = width, units = 'cm')  
   
   new_seq <- seq(-50, 90, by = 10)
   
@@ -370,8 +398,10 @@ for(scen in scenarions){
   
   chill_correction
   
-  tmap_save(chill_correction, filename = f_name, height = height, width = width, units = 'cm')  
+  #tmap_save(chill_correction, filename = f_name, height = height, width = width, units = 'cm')  
+
 } #end of loop to create interpolation maps
+
 
 #########################
 ###compute change chill map
@@ -379,12 +409,16 @@ for(scen in scenarions){
 
 #change names in list to scenario names
 names(chill_list) <- scenarions
+names(plot_list) <- scenarions
 
 # Generate a baseline raster scenario based on the median across historic simulated scenarios
 brick_raster <- brick(chill_list[2 : 11])
 
 # Estimate the median across raster layers
 median_raster_scen <- calc(brick_raster, median)
+
+# Create a list to save the plots
+change_maps <- list()
 
 #loop for change 2017 to future scenarios
 for(scen in scenarions[12 : 23]){
@@ -397,7 +431,7 @@ for(scen in scenarions[12 : 23]){
     tm_raster(palette = get_brewer_pal("RdBu", contrast = c(0, 0.75)),
               midpoint = 0,
               title = 'SWC relative to\n 1981 - 2017\n       (CP)',
-              breaks = seq(-60, 10, by = 10), style = "cont", legend.reverse = TRUE) +
+              breaks = seq(-60, 10, by = 20), style = "cont", legend.reverse = TRUE) +
     tm_shape(Porig) +
     tm_symbols(size = 0.2, shape = 4, col = 'black') +
     tm_shape(SA) +
@@ -405,17 +439,30 @@ for(scen in scenarions[12 : 23]){
     tm_graticules(lines = F, labels.size = 0.6) +
     tm_compass(position = c(0.67, 0.85), text.size = 0.6) +
     tm_scale_bar(position = c(0.57, 0.925), bg.color = 'transparent', text.size = 0.6) +
-    tm_layout(legend.outside = F,
-              legend.text.size = 0.8,
-              legend.title.size = 1.2,
-              legend.height = 0.3,
+    tm_add_legend(type = "line", labels = "Excluded", col = "grey", lwd = 3) +
+    tm_layout(main.title = paste0("      ", scenarios_fixed[[scen]]),
+              main.title.position = "center",
+              main.title.size = 1.4,
+              legend.outside = F,
+              legend.position = c(0.68, 0.005),
+              legend.text.size = 0.9,
+              legend.title.size = 1,
+              legend.height = 0.41,
               outer.margins = c(0.001, 0.001, 0.001, 0.001))
   
   change_map
   
-  tmap_save(change_map, filename = f_name, height = height, width = width, units = 'cm')  
+  #tmap_save(change_map, filename = f_name, height = height, width = width, units = 'cm')  
+  
+  # Save the maps
+  change_maps <- append(change_maps, list(change_map))
   
 }
+
+# name the change_maps list
+names(change_maps) <- scenarions[12 : 23]
+
+
 
 #calculate change 1981 to 2017 (2017 minus 1981)
 scen <- scenarions[2]
@@ -426,8 +473,8 @@ change_map <- tm_shape(SA_test) +
   tm_shape(chill_list[["scen_2017"]] - chill_list[[scen]]) +
   tm_raster(palette = get_brewer_pal("RdBu", contrast = c(0, 0.75)),
             midpoint = 0,
-            title = 'SWC relative to\n    1981 (CP)',
-            style = "cont", legend.reverse = TRUE, breaks = seq(-10, 10, by = 5)) +
+            title = 'Safe Winter Chill\n          (CP)',
+            style = "cont", legend.reverse = TRUE, breaks = seq(-15, 10, by = 5)) +
   tm_shape(Porig) +
   tm_symbols(size = 0.2, shape = 4, col = 'black') + 
   tm_shape(SA) +
@@ -435,10 +482,15 @@ change_map <- tm_shape(SA_test) +
   tm_graticules(lines = F, labels.size = 0.6) +
   tm_compass(position = c(0.67, 0.85), text.size = 0.6) +
   tm_scale_bar(position = c(0.57, 0.925), bg.color = 'transparent', text.size = 0.6) +
-  tm_layout(legend.outside = F,
-            legend.text.size = 0.8,
-            legend.title.size = 1,
-            legend.height = 0.3,
+  tm_add_legend(type = "line", labels = "Excluded", col = "grey", lwd = 3) +
+  tm_layout(main.title = "      Chill change 1981 - 2017",
+            main.title.position = "center",
+            main.title.size = 1.5,
+            legend.outside = F,
+            legend.position = c(0.67, 0.005),
+            legend.text.size = 0.9,
+            legend.title.size = 1.1,
+            legend.height = 0.4,
             outer.margins = c(0.001, 0.001, 0.001, 0.001))
 
 change_map
