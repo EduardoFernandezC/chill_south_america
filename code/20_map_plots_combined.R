@@ -27,12 +27,11 @@ figure_4
 tmap_save(figure_4, "figures/final_figures/figure_4.png", width = 17.6, height = 23.4, units = "cm", dpi = 600)
 
 
-# Figure 5 will show the expected change in chill for future scenarios relative to the median historic chill from
-# simulated historic scenarios. Will only use one combination of RCP and year with
-# pessimistic and optimistic scenarios
+# Figure 5 future chill levels in southern-South America
 
-figure_5 <- tmap_arrange(change_maps[["rcp45_2050_pessimistic"]], change_maps[["rcp45_2050_optimistic"]], 
-                         change_maps[["rcp85_2085_pessimistic"]], change_maps[["rcp85_2085_optimistic"]]) 
+figure_5 <- tmap_arrange(chile_list[["rcp45_2050_pessimistic"]], chile_list[["rcp45_2050_optimistic"]], 
+                         chile_list[["rcp85_2085_pessimistic"]], chile_list[["rcp85_2085_optimistic"]],
+                         ncol = 2) 
 
 figure_5
 
@@ -40,12 +39,14 @@ figure_5
 tmap_save(figure_5, "figures/final_figures/figure_5.png", width = 17.6, height = 23.4, units = "cm", dpi = 600)
 
 
-# Figure 7 future chill levels in southern-South America
+# Figure 6 will show the expected change in chill for future scenarios relative to the median historic chill from
+# simulated historic scenarios. Will only use one combination of RCP and year with
+# pessimistic and optimistic scenarios
 
-figure_7 <- tmap_arrange(chile_list[["rcp45_2050_pessimistic"]], chile_list[["rcp45_2050_optimistic"]], 
-                         chile_list[["rcp85_2085_pessimistic"]], chile_list[["rcp85_2085_optimistic"]]) 
+figure_6 <- tmap_arrange(change_maps[["rcp45_2050_pessimistic"]], change_maps[["rcp45_2050_optimistic"]], 
+                         change_maps[["rcp85_2085_pessimistic"]], change_maps[["rcp85_2085_optimistic"]]) 
 
-figure_7
+figure_6
 
-# Save figure 5 with tmap save
-tmap_save(figure_7, "figures/final_figures/figure_7.png", width = 17.6, height = 23.4, units = "cm", dpi = 600)
+# Save figure 6 with tmap save
+tmap_save(figure_6, "figures/final_figures/figure_6.png", width = 17.6, height = 23.4, units = "cm", dpi = 600)

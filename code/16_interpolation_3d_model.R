@@ -344,31 +344,37 @@ for(scen in scenarions){
 
   f_name <- paste('figures/interpolation/adjusted_chill_', scen, '.png', sep = '')
   
-  chill_map <- tm_shape(SA_test) +
-    tm_lines(col = "grey") +
+  chill_map <- tm_shape(SA) +
+    tm_fill(col = 'grey10') +
+    tm_shape(SA_test) +
+    tm_lines(col = 'grey35') +
     tm_shape(r.m) +
-    tm_raster(palette = get_brewer_pal("RdBu", contrast = c(0, 0.75)),
-              midpoint = 30, 
-              title = "Safe Winter Chill",
-              breaks = seq(0, 100, by = 20), style = "cont", legend.reverse = TRUE,
+    tm_raster(palette = get_brewer_pal('RdYlBu', n = 20),
+              midpoint = 30,
+              title = 'Safe Winter Chill',
+              style = 'cont', legend.reverse = TRUE, breaks = seq(0, 100, by = 20),
               legend.format = list(suffix = " CP", text.align = "center")) +
-    tm_shape(Porig) + 
-    tm_symbols(size = 0.075, shape = 4, col = 'black', alpha = 0.6) +
+    tm_shape(Porig) +
+    tm_symbols(size = 0.075, shape = 4, col = 'firebrick', alpha = 0.8) + 
     tm_shape(SA) +
     tm_borders(col = 'grey40') +
-    tm_graticules(lines = F, labels.size = 0.6) +
-    tm_compass(position = c(0.67, 0.85), text.size = 0.6) +
-    tm_scale_bar(position = c(0.57, 0.925), bg.color = 'transparent', text.size = 0.6) +
-    tm_add_legend(type = "line", labels = "Excluded", col = "grey", lwd = 3) +
-    tm_add_legend(type = "symbol", labels = "  Weather station", shape = 4, size = 0.5) +
+    tm_graticules(lines = F, labels.size = 0.6, labels.col = "black") +
+    tm_compass(position = c(0.66, 0.85), text.size = 0.6) +
+    tm_scale_bar(position = c(0.57, 0.925), bg.color = 'transparent', text.size = 0.6, color.dark = "grey20") +
+    tm_add_legend(type = "line", labels = "Excluded", col = "grey35", lwd = 3) +
+    tm_add_legend(type = "symbol", labels = "  Weather station", shape = 4, size = 0.5, col = "firebrick") +
     tm_layout(main.title = paste0("      ", scenarios_fixed[[scen]]),
               main.title.position = "center",
               main.title.size = 1.4,
+              main.title.color = "black",
               legend.outside = F,
               legend.title.size = 0.85,
               legend.text.size = 0.65,
               legend.position = c(0.665, 0.005),
-              outer.margins = c(0.001, 0.001, 0.001, 0.001))
+              outer.margins = c(0.001, 0.001, 0.001, 0.001),
+              bg.color = "black",
+              attr.color = "white",
+              outer.bg.color = "white")
   
   chill_map
   
@@ -379,36 +385,43 @@ for(scen in scenarions){
   
   # Zoom-in Chile and Argentina
   b <- bbox(Porig)
-  b[1, ] <- c(-81, -55)
-  b[2, ] <- c(-45, -25)
+  b[1, ] <- c(-74, -49)
+  b[2, ] <- c(-40, -30)
   b <- bbox(t(b))
   
-  chile <- tm_shape(SA_test, bbox = b) +
-    tm_lines(col = 'grey') +
+  chile <- tm_shape(SA, bbox = b) +
+    tm_fill(col = 'grey10') +
+    tm_shape(SA_test, bbox = b) +
+    tm_lines(col = 'grey35') +
     tm_shape(r.m, bbox = b) +
-    tm_raster(palette = get_brewer_pal("RdBu", contrast = c(0, 0.75)),
+    tm_raster(palette = get_brewer_pal('RdYlBu', n = 20),
               midpoint = 30,
               title = 'Safe Winter Chill',
-              style = "cont", legend.reverse = TRUE, breaks = seq(0, 100, by = 20),
+              style = 'cont', legend.reverse = TRUE, breaks = seq(0, 100, by = 20),
               legend.format = list(suffix = " CP", text.align = "center")) +
     tm_shape(Porig, bbox = b) +
-    tm_symbols(size = 0.085, shape = 4, col = 'black', alpha = 0.6) + 
+    tm_symbols(size = 0.075, shape = 4, col = 'firebrick', alpha = 0.8) + 
     tm_shape(SA, bbox = b) +
     tm_borders(col = 'grey40') +
-    tm_graticules(lines = F, labels.size = 0.6) +
-    tm_compass(position = c(0.7, 0.08), text.size = 0.6) +
-    tm_scale_bar(position = c(0.5675, 0), bg.color = 'transparent', text.size = 0.6) +
-    tm_add_legend(type = "line", labels = "Excluded", col = "grey", lwd = 3) +
-    tm_add_legend(type = "symbol", labels = "  Weather station", shape = 4, size = 0.5) +
+    tm_graticules(lines = F, labels.size = 0.6, labels.col = "black") +
+    tm_compass(position = c(0.025, 0.9), text.size = 0.6) +
+    tm_scale_bar(position = c(0.645, 0.925), bg.color = 'transparent', text.size = 0.6, color.dark = "grey20",
+                 text.color = "black") +
+    tm_add_legend(type = "line", labels = "Excluded", col = "grey35", lwd = 3) +
+    tm_add_legend(type = "symbol", labels = "  Weather station", shape = 4, size = 0.5, col = "firebrick") +
     tm_layout(main.title = paste0("      ", scenarios_fixed[[scen]]),
               main.title.position = "center",
               main.title.size = 1.4,
+              main.title.color = "black",
               legend.outside = F,
-              legend.title.size = 0.9,
-              legend.text.size = 0.7,
-              legend.position = c(0.001, 0.58),
-              outer.margins = c(0.001, 0.001, 0.001, 0.001))
-  
+              legend.title.size = 0.85,
+              legend.text.size = 0.65,
+              legend.position = c(0.65, 0.001),
+              outer.margins = c(0.001, 0.001, 0.001, 0.001),
+              bg.color = "black",
+              attr.color = "white",
+              outer.bg.color = "white")
+    
   chile
   
   chile_list <- append(chile_list, list(chile))
@@ -470,31 +483,37 @@ for(scen in scenarions[12 : 23]){
   #create file name
   f_name <- paste('figures/interpolation/change_hist_sim_vs_', scen, '.png', sep = '')
   
-  change_map <- tm_shape(SA_test) +
-    tm_lines(col = 'grey') +
+  change_map <- tm_shape(SA) +
+    tm_fill(col = 'grey10') +
+    tm_shape(SA_test) +
+    tm_lines(col = 'grey35') +
     tm_shape(chill_list[[scen]] - median_raster_scen) +
-    tm_raster(palette = get_brewer_pal("RdBu", contrast = c(0, 0.75)),
+    tm_raster(palette = get_brewer_pal('RdYlBu', n = 10),
               midpoint = 0,
               title = 'SWC relative to\n 1981 - 2017',
-              breaks = seq(-60, 10, by = 20), style = "cont", legend.reverse = TRUE,
+              style = 'cont', legend.reverse = TRUE, breaks = seq(-40, 10, length.out = 6),
               legend.format = list(suffix = " CP", text.align = "center")) +
     tm_shape(Porig) +
-    tm_symbols(size = 0.075, shape = 4, col = 'black', alpha = 0.6) +
+    tm_symbols(size = 0.075, shape = 4, col = 'firebrick', alpha = 0.8) + 
     tm_shape(SA) +
     tm_borders(col = 'grey40') +
-    tm_graticules(lines = F, labels.size = 0.6) +
-    tm_compass(position = c(0.67, 0.85), text.size = 0.6) +
-    tm_scale_bar(position = c(0.57, 0.925), bg.color = 'transparent', text.size = 0.6) +
-    tm_add_legend(type = "line", labels = "Excluded", col = "grey", lwd = 3) +
-    tm_add_legend(type = "symbol", labels = "  Weather station", shape = 4, size = 0.5) +
+    tm_graticules(lines = F, labels.size = 0.6, labels.col = "black") +
+    tm_compass(position = c(0.66, 0.85), text.size = 0.6) +
+    tm_scale_bar(position = c(0.57, 0.925), bg.color = 'transparent', text.size = 0.6, color.dark = "grey20") +
+    tm_add_legend(type = "line", labels = "Excluded", col = "grey35", lwd = 3) +
+    tm_add_legend(type = "symbol", labels = "  Weather station", shape = 4, size = 0.5, col = "firebrick") +
     tm_layout(main.title = paste0("      ", scenarios_fixed[[scen]]),
               main.title.position = "center",
               main.title.size = 1.4,
+              main.title.color = "black",
               legend.outside = F,
               legend.title.size = 0.85,
               legend.text.size = 0.65,
               legend.position = c(0.665, 0.005),
-              outer.margins = c(0.001, 0.001, 0.001, 0.001))
+              outer.margins = c(0.001, 0.001, 0.001, 0.001),
+              bg.color = "black",
+              attr.color = "white",
+              outer.bg.color = "white")
   
   change_map
   
@@ -514,35 +533,41 @@ names(change_maps) <- scenarions[12 : 23]
 scen <- scenarions[2]
 f_name <- paste('figures/interpolation/change_2017_', scen, '.png', sep = '')
 
-change_map <- tm_shape(SA_test) +
-  tm_lines(col = 'grey') +
+change_map <- tm_shape(SA) +
+  tm_fill(col = 'grey10') +
+  tm_shape(SA_test) +
+  tm_lines(col = 'grey35') +
   tm_shape(chill_list[["scen_2017"]] - chill_list[[scen]]) +
-  tm_raster(palette = get_brewer_pal("RdBu", contrast = c(0, 0.75)),
+  tm_raster(palette = get_brewer_pal('RdYlBu', n = 20),
             midpoint = 0,
             title = 'Safe Winter Chill',
-            style = "cont", legend.reverse = TRUE, breaks = seq(-15, 10, by = 5),
+            style = 'cont', legend.reverse = TRUE, breaks = seq(-15, 10, length.out = 6),
             legend.format = list(suffix = " CP", text.align = "center")) +
   tm_shape(Porig) +
-  tm_symbols(size = 0.075, shape = 4, col = 'black', alpha = 0.6) + 
+  tm_symbols(size = 0.075, shape = 4, col = 'firebrick', alpha = 0.8) + 
   tm_shape(SA) +
   tm_borders(col = 'grey40') +
-  tm_graticules(lines = F, labels.size = 0.6) +
-  tm_compass(position = c(0.67, 0.85), text.size = 0.6) +
-  tm_scale_bar(position = c(0.57, 0.925), bg.color = 'transparent', text.size = 0.6) +
-  tm_add_legend(type = "line", labels = "Excluded", col = "grey", lwd = 3) +
-  tm_add_legend(type = "symbol", labels = "  Weather station", shape = 4, size = 0.5) +
+  tm_graticules(lines = F, labels.size = 0.6, labels.col = "black") +
+  tm_compass(position = c(0.66, 0.85), text.size = 0.6) +
+  tm_scale_bar(position = c(0.57, 0.925), bg.color = 'transparent', text.size = 0.6, color.dark = "grey20") +
+  tm_add_legend(type = "line", labels = "Excluded", col = "grey35", lwd = 3) +
+  tm_add_legend(type = "symbol", labels = "  Weather station", shape = 4, size = 0.5, col = "firebrick") +
   tm_layout(main.title = "      Chill change 1981 - 2017",
             main.title.position = "center",
             main.title.size = 1.4,
+            main.title.color = "black",
             legend.outside = F,
             legend.title.size = 0.85,
             legend.text.size = 0.65,
             legend.position = c(0.665, 0.005),
-            outer.margins = c(0.001, 0.001, 0.001, 0.001))
+            outer.margins = c(0.001, 0.001, 0.001, 0.001),
+            bg.color = "black",
+            attr.color = "white",
+            outer.bg.color = "white")
 
 change_map
 
-tmap_save(change_map, filename = f_name, height = height, width = width, units = 'cm')  
+#tmap_save(change_map, filename = f_name, height = height, width = width, units = 'cm')  
 
 
 
