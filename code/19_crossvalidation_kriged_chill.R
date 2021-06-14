@@ -81,8 +81,8 @@ min_temp_jul <- raster('data/world_clim/wc2-2/wc2.1_30s_tmin_07.tif')
 max_temp_jul <- raster('data/world_clim/wc2-3/wc2.1_30s_tmax_07.tif')
 
 #extract south america from world wide map
-min_temp_jul <- crop(min_temp_jul,bb)
-max_temp_jul <- crop(max_temp_jul,bb)
+min_temp_jul <- crop(min_temp_jul, bb)
+max_temp_jul <- crop(max_temp_jul, bb)
 
 #adjust resolution of temperature map to match the grid of our project
 temp_min.res<-resample(min_temp_jul,raster(grd))
@@ -323,6 +323,12 @@ eval_df_final_summ_WS <- eval_df_final %>% group_by(station_name, CTRY, Longitud
 #get general stats of residuals
 summary(eval_df_final_summ_WS)
 
+# Make a hist to see extreme values
+hist(eval_df_final_summ_WS$median_res)
+
+# Check the location of extreme values
+eval_df_final_summ_WS[order(eval_df_final_summ_WS$median_res), ]
+eval_df_final_summ_WS[order(eval_df_final_summ_WS$median_res, decreasing = TRUE), ]
 
 
 # eval_melt <- melt(as.data.table(eval_df_final), id.vars = c('station_name','CTRY','X1981','Latitude','Longitude'))
@@ -354,24 +360,43 @@ eval_df_final_sp <-  SpatialPointsDataFrame(eval_df_final_summ_WS[, c("Longitude
 # Identify the NAs from the cross validation procedure
 NAs_cross_validation <- as.data.frame(eval_df_final_sp[which(is.na(eval_df_final_sp$median_res)), ])[["station_name"]]
 
-chill_residual <- tm_shape(SA) +
+# Increase the coverage of the plot to fit the legends inside
+b <- bbox(Porig)
+b[1, ] <- c(-80.5, -15)
+b[2, ] <- c(-55, 12)
+b <- bbox(t(b))
+
+chill_residual <- tm_shape(SA, bbox = b) +
+  tm_fill(col = 'grey10') +
+  tm_shape(SA, bbox = b) +
   tm_borders(col = 'grey40') +
-  tm_graticules(lines = FALSE, labels.size = 0.6) +
+  tm_graticules(lines = FALSE, labels.size = 0.6, labels.col = "black") +
   tm_shape(eval_df_final_sp) +
-  tm_bubbles(col = 'median_res', size = 'sd', palette = get_brewer_pal("RdBu"),
+  tm_symbols(col = "median_res", size = 0.0001, legend.col.show = FALSE,
+             legend.hist = TRUE, palette = get_brewer_pal("RdYlBu", n = 30), midpoint = 0,
+             breaks = seq(-40, 10, 5), legend.hist.title = "Histogram of residuals", legend.hist.z = 4) +
+  tm_shape(eval_df_final_sp) +
+  tm_bubbles(col = 'median_res', size = 'sd', palette = get_brewer_pal("RdYlBu", n = 30),
              midpoint = 0, style = "cont", breaks = seq(-40, 10, 5), legend.col.reverse = TRUE,
-             title.size = "SD residual (CP)", title.col = "Median residual (CP)") + 
+             title.size = "SD residual", title.col = "Median residual",
+             legend.format = list(suffix = " CP", text.align = "center"), legend.col.z = 2,
+             legend.size.z = 1, border.col = "grey10") + 
   tm_shape(Porig[which(Porig$station_name %in% NAs_cross_validation), ]) +
-  tm_symbols(size = 0.2, shape = 4, col = 'black') +
-  tm_add_legend(type = "symbol", labels = "Missing", col = "black", shape = 4, size = 0.5) +
-  tm_compass(position = c(0.67, 0.09), text.size = 0.5) +
-  tm_scale_bar(position = c(0.57, 0.01), bg.color = 'transparent', text.size = 0.5) +
-  tm_layout(legend.outside = T,
-            outer.margins = c(0.001, 0.001, 0.001, 0.001),
+  tm_symbols(size = 0.2, shape = 4, col = 'firebrick') +
+  tm_add_legend(type = "symbol", labels = "Missing", col = "firebrick", shape = 4, size = 0.5, z = 3) +
+  tm_compass(position = c(0.92, 0.92), text.size = 0.5) +
+  tm_scale_bar(position = c(0.57, 0.935), bg.color = 'transparent', text.size = 0.5, color.dark = "grey20") +
+  tm_layout(legend.outside = F,
+            outer.margins = c(0.01, 0.01, 0.01, 0.01),
             legend.title.size = 0.7,
-            legend.text.size = 0.5)
+            legend.text.size = 0.5,
+            legend.hist.width = 0.3,
+            legend.hist.size = 0.5,
+            legend.position = c(0.7, 0.01),
+            bg.color = "black",
+            attr.color = "white")
 
 chill_residual
 
-tmap_save(chill_residual, 'figures/cross-validation/residual_corrected-krig.png',
-          height = 12, width = 11, units = 'cm')
+tmap_save(chill_residual, 'figures/final_figures/figure_7.png',
+          height = 11, width = 11, units = 'cm')

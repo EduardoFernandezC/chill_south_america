@@ -126,11 +126,11 @@ stations_map <- tm_shape(SA) +
                 col = "black", shape = c(2, 1, 3), size = 0.5, title = "Database") +
   tm_layout(legend.outside = FALSE,
             legend.position = c(0.7, 0.2),
-            outer.margins = c(0.001, 0.001, 0.001, 0.001))
+            outer.margins = c(0.01, 0.01, 0.01, 0.01))
 
 stations_map
 
-tmap_save(stations_map, 'figures/final_figures/figure_1_tmap.png',
+tmap_save(stations_map, 'figures/final_figures/figure_1.png',
           height = 12, width = 11, units = 'cm')
 
 

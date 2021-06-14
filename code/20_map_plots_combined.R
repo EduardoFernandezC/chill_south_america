@@ -2,6 +2,40 @@
 # to run the for loop for generating the figures. Make sure the save calls are commented to avoid saving the plots to the
 # folder again
 
+# Figure 2 (map for the figure)
+figure_2 <- tm_shape(SA) +
+  tm_fill(col = 'grey10') +
+  tm_shape(SA_test) +
+  tm_lines(col = 'grey35') +
+  tm_shape(r.m) +
+  tm_raster(palette = get_brewer_pal('RdYlBu', n = 20),
+            midpoint = 30,
+            title = 'Safe Winter Chill',
+            style = 'cont', legend.reverse = TRUE, breaks = seq(0, 100, by = 20),
+            legend.format = list(suffix = " CP", text.align = "center")) +
+  tm_shape(Porig) +
+  tm_symbols(size = 0.075, shape = 4, col = 'firebrick', alpha = 0.8) + 
+  tm_shape(SA) +
+  tm_borders(col = 'grey40') +
+  tm_graticules(lines = F, labels.size = 0.6, labels.col = "black") +
+  tm_compass(position = c(0.66, 0.85), text.size = 0.6) +
+  tm_scale_bar(position = c(0.57, 0.925), bg.color = 'transparent', text.size = 0.6, color.dark = "grey20") +
+  tm_add_legend(type = "line", labels = "Excluded", col = "grey35", lwd = 3) +
+  tm_add_legend(type = "symbol", labels = "  Weather station", shape = 4, size = 0.5, col = "firebrick") +
+  tm_layout(legend.outside = F,
+            legend.title.size = 0.85,
+            legend.text.size = 0.65,
+            legend.position = c(0.665, 0.005),
+            outer.margins = c(0.001, 0.001, 0.001, 0.001),
+            bg.color = "black",
+            attr.color = "white",
+            outer.bg.color = "white")
+
+figure_2
+
+tmap_save(figure_2, filename = "figures/final_figures/figure_2_map.png",
+          height = height, width = width, units = 'cm')
+
 
 # Figure 3 will show the historic observed, historic simulated 1981 and 2017 as well as the change between 1981 and 2017
 # (simulated)
