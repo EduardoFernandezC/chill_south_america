@@ -4,6 +4,7 @@
 library(stringr)#needed for functions to extract the stations name from the file names
 library(ggplot2)
 library(ggrepel)#needed to avoid overlap of labels
+library(tidyverse)
 
 #read historic temperatures. These are generated from actual historic records plus a patching procedure plus 
 # an interpolating procedure as the latest option for filling the gaps...
@@ -14,6 +15,9 @@ temp_files <- lapply(temp, function (x) read.csv(paste0(path, x)))
 
 #just a test to see if it works
 temp1 <- read.csv(paste0(path, 'WS_1_ARTURO MERINO BENITEZ INTL.csv'))
+min_year <- 1980
+max_year <- 2000
+
 sub1 <- subset(temp1, Year >= min_year & Year <= max_year & Month == 7)
 sub1$t_mean <- round((sub1$Tmax + sub1$Tmin) / 2, digits = 2)
 mean(sub1$t_mean)
@@ -38,7 +42,7 @@ station_names <- sapply(temp, function(x){
   return(str_split(str_split(x, pattern = '_')[[1]][3], pattern = '.csv')[[1]][1])
 })
 
-calc_tmean(temp_files[[1]],month = 7,min_year = 1980,max_year = 2000)
+calc_tmean(temp_files[[1]], month = 7, min_year = 1980, max_year = 2000)
 
 #remove names of vectotr
 station_names <- unname(station_names)
@@ -69,7 +73,8 @@ stations <- merge.data.frame(stations, df_temp, by.x = 'station_name', by.y = 'N
 #update the stations dataframe
 write.csv(stations, file = 'data/all_chill_projections.csv', row.names = F)
 
-
+# Read the data from the folder
+stations <- read.csv("data/all_chill_projections.csv")
 
 
 # Some quality check plots
@@ -80,7 +85,7 @@ df <- data.frame(obs_avg_temp_jul = 0:30, avg_temp_jul = 0:30)
 
 ####  Tmean
 
-ggplot(stations,aes(x= obs_avg_temp_jul, y = avg_temp_jul)) + 
+ggplot(stations, aes(x= obs_avg_temp_jul, y = avg_temp_jul)) + 
   geom_ribbon(data = df, aes(ymin = avg_temp_jul -2, ymax = avg_temp_jul +2), fill="grey", alpha=.5)+
   geom_point() +
   #geom_errorbar(aes(ymin=avg_temp_jul-sd_obs_avg_temp_jul, ymax = avg_temp_jul + sd_obs_avg_temp_jul))+
@@ -195,4 +200,59 @@ sum((stations$outlier_tmin_jul | stations$outlier_tmax_jul))
 
 #update the stations dataframe
 write.csv(stations, file = 'data/all_chill_projections.csv', row.names = F)
+
+
+# Create one figure including the outliers for tmin and tmax
+
+stations <- read.csv("data/all_chill_projections.csv")
+
+stations_tmin <- select(stations, station_name, min_temp_jul, obs_tmin_jul)
+
+colnames(stations_tmin) <- c("station_name", "WorldClim", "On-site")
+
+stations_tmin["Var"] <- "Tmin"
+
+
+# Tmax
+stations_tmax <- select(stations, station_name, max_temp_jul, obs_tmax_jul)
+
+colnames(stations_tmax) <- c("station_name", "WorldClim", "On-site")
+
+stations_tmax["Var"] <- "Tmax"
+
+
+# Merge both data frames
+stations_both <- bind_rows(stations_tmax, stations_tmin)
+
+
+# Plot
+
+ggplot(stations_both, aes(`On-site`, WorldClim)) + 
+  geom_point() +
+  geom_ribbon(data = df, aes(max_temp_jul, obs_tmax_jul, ymin = max_temp_jul - 2, ymax = max_temp_jul + 2),
+              fill = "grey", alpha = .5) +
+  geom_abline(slope = 1, intercept = 0) +
+  facet_wrap(. ~ factor(Var, labels = c("Maximum temperature", "Minimum temperature")), nrow = 2) +
+  geom_label_repel(
+    data = stations_both[abs(stations_both$WorldClim - stations_both$`On-site`) > 2, ],
+    aes(label = station_name),
+    box.padding = unit(0.35, "lines"),
+    point.padding = unit(0.3, "lines"),
+    min.segment.length = 0,
+    nudge_x = 20,
+    nudge_y = 20,
+    max.overlaps = 20,
+    direction = "both",
+    force = 20) +
+  xlab("On-site data (°C)") +
+  ylab("WorldClim data (°C)") +
+  theme_bw(base_size = 14)
+
+ggsave("figures/final_figures/figure_S1.png", height = 19, width = 17, units = "cm", dpi = 600)
+
+
+
+
+
+
 

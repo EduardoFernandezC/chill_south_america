@@ -76,6 +76,25 @@ proj4string(grd) <- proj4string(Porig)
 #save scenario names to vector
 scenarions <- colnames(stations)[6 : 28]
 
+# Create good scenario names to use in the main title of the plot
+scenarios_fixed <- c(observed_SWC = "Historic observed", scen_1981 = "Historic simulated (1981)",
+                     scen_1985 =  "Historic simulated (1985)", scen_1989 = "Historic simulated (1989)",
+                     scen_1993 = "Historic simulated (1993)", scen_1997 = "Historic simulated (1997)",
+                     scen_2001 = "Historic simulated (2001)", scen_2005 = "Historic simulated (2005)",
+                     scen_2009 = "Historic simulated (2009)", scen_2013 = "Historic simulated (2013)",
+                     scen_2017 = "Historic simulated (2017)", rcp45_2050_pessimistic = "RCP4.5 - 2050 pessimistic",
+                     rcp45_2050_intermediate = "RCP4.5 - 2050 intermediate",
+                     rcp45_2050_optimistic = "RCP4.5 - 2050 optimistic",
+                     rcp45_2085_pessimistic = "RCP4.5 - 2085 pessimistic",
+                     rcp45_2085_intermediate = "RCP4.5 - 2085 intermediate",
+                     rcp45_2085_optimistic = "RCP4.5 - 2085 optimistic",
+                     rcp85_2050_pessimistic = "RCP8.5 - 2050 pessimistic",
+                     rcp85_2050_intermediate = "RCP8.5 - 2050 intermediate",
+                     rcp85_2050_optimistic = "RCP8.5 - 2050 optimistic",
+                     rcp85_2085_pessimistic = "RCP8.5 - 2085 pessimistic",
+                     rcp85_2085_intermediate = "RCP8.5 - 2085 pessimistic",
+                     rcp85_2085_optimistic = "RCP8.5 - 2085 optimistic"  )
+
 #load tmin and tmax map for july
 min_temp_jul <- raster('data/world_clim/wc2-2/wc2.1_30s_tmin_07.tif')
 max_temp_jul <- raster('data/world_clim/wc2-3/wc2.1_30s_tmax_07.tif')
@@ -92,10 +111,10 @@ max_temp_jul <- crop(max_temp_jul, bb)
 temp_min.res <- resample(min_temp_jul, raster(grd))
 temp_max.res <- resample(max_temp_jul, raster(grd))
 
-# ## produce interpolated layer from both temperature maps of all station locations
-# f.temp_min <- as.formula(min_temp_jul ~ Longitude + Latitude)
-# f.temp_max <- as.formula(max_temp_jul ~ Longitude + Latitude)
-# 
+# produce interpolated layer from both temperature maps of all station locations
+f.temp_min <- as.formula(min_temp_jul ~ Longitude + Latitude)
+f.temp_max <- as.formula(max_temp_jul ~ Longitude + Latitude)
+
 # #set up variogram
 # var.smpl.temp_min <- variogram(f.temp_min, Porig,cutoff = 1400)
 # var.smpl.temp_max <- variogram(f.temp_max, Porig)
@@ -120,7 +139,7 @@ temp_max.res <- resample(max_temp_jul, raster(grd))
 var_smpl_min_temp_jul <- automap::autofitVariogram(f.temp_min, Porig)
 plot(var_smpl_min_temp_jul)
 
-var_smpl_max_temp_jul <- automap::autofitVariogram(f.temp_max, Porig,fix.values = c(NA,240,NA))
+var_smpl_max_temp_jul <- automap::autofitVariogram(f.temp_max, Porig, fix.values = c(NA, 240, NA))
 plot(var_smpl_max_temp_jul)
 
 #do the krigging
@@ -158,9 +177,15 @@ get_chill_correction <-  function(tmin, tmax, lookup = pred){
 #create empty list which is used to store chill values
 chill_list <- list()
 
+# Create a plot list
+plot_list <- list()
+
+# List for Chile
+chile_list <- list()
+
 #set height and width (cm) of maps when maps are saved
-height <- 13
-width <- 12
+height <- 12
+width <- 11
 
 for(scen in scenarions){
   
@@ -189,21 +214,25 @@ for(scen in scenarions){
                                          z = value)) +
     geom_contour_fill(bins = 100) +
     scale_fill_gradientn(colours = alpha(matlab.like(15)),
-                         name = paste("\nSafe Chill Portions\n[CP]", sep = ''), trans = 'reverse') +
+                         name = paste("Safe Winter Chill\n(in CP)", sep = ''), trans = 'reverse') +
     geom_contour(col = "black")  +
     geom_point(data = stations, aes(x = min_temp_jul,
                                     y = max_temp_jul,
                                     z = NULL),
                size = 0.7) +
     geom_text_contour(stroke = 0.2, size = 2) +
-    labs(title = scen) +
-    ylab('Maximum Temperature, July [°C]') +
-    xlab('Minimum Temperature, July [°C]') +
-    theme_bw(base_size = 12)
+    ylab('Monthly maximum temperature in July (°C)') +
+    xlab('Monthly minimum temperature in July (°C)') +
+    theme_bw(base_size = 12) +
+    theme(legend.title.align = 0.5,
+          legend.position = c(0.875, 0.3),
+          legend.background = element_blank())
   
-  ggsave(plot = correction_plane,
-         filename = paste('figures/interpolation/correction_plane_', scen, '.jpg', sep = ''),
-         height = 10, width = 15, units = 'cm')
+  correction_plane <- cowplot::ggdraw(align_legend(correction_plane)) 
+  
+  # ggsave(plot = correction_plane,
+  #        filename = paste('figures/interpolation/correction_plane_', scen, '.jpg', sep = ''),
+  #        height = 10, width = 15, units = 'cm')
   
   #save number of rows and cols
   no_row <- nrow(r.m_min)
@@ -229,20 +258,28 @@ for(scen in scenarions){
   model_krigged_temp <- sapply(1 : nrow(t_both), function(i) get_chill_correction(t_both[i, 1], t_both[i, 2]))
   model_real_temp <- sapply(1:nrow(t_both_real), function(i) get_chill_correction(t_both_real[i, 1], t_both_real[i, 2]))
   
-  #test_corr_df <- data.frame('min_temp_jul' = as.vector(mat_real_tmin),'max_temp_jul' = as.vector(mat_real_tmax))
+  # test_corr_df <- data.frame('min_temp_jul' = as.vector(mat_real_tmin),'max_temp_jul' = as.vector(mat_real_tmax))
+  # 
+  # #see where the datapoints are in the correction plane
+  # hatched_areas <- ggplot(melted,
+  #       aes(x = min_temp_jul, y = max_temp_jul, z = value)) +
+  #   geom_point(data = test_corr_df,
+  #              aes(x = min_temp_jul, y = max_temp_jul, z = NULL),
+  #              size=0.7, alpha = 0.5) +
+  #   geom_contour_fill(alpha = 0.5, color = "grey40") +
+  #   geom_text_contour(stroke = 0.2) +
+  #   scale_fill_gradientn(colours = alpha(matlab.like(15)),
+  #                        name = "Safe Winter Chill\n          (CP)", trans = 'reverse') +
+  #   labs(y = "Maximum temperature in July (°C)",
+  #        x = "Minimum temperature in July (°C)") +
+  #   theme_bw() +
+  #   theme(legend.position = c(0.85, 0.25),
+  #         legend.background = element_blank())
+  # 
+  # hatched_areas <- cowplot::ggdraw(align_legend(hatched_areas))
+  # 
+  # ggsave("figures/final_figures/figure_S2.png", width = 12, height = 10, units = "cm", dpi = 600)
   
-  #see where the datapoints are in the correction plane
-  #ggplot(melted,
-  #       aes(x=min_temp_jul,y=max_temp_jul,z=value)) +
-  #  geom_contour_fill(bins=100) +
-  #  scale_fill_gradientn(colours=alpha(matlab.like(15)),
-  #                       name="Safe Chill Units", trans = 'reverse') +
-  #  geom_contour(col="black")  +
-  #  geom_text_contour(stroke = 0.2) +
-  #  geom_point(data=test_corr_df,
-  #             aes(x=min_temp_jul,y=max_temp_jul,z=NULL),
-  #             size=0.7, alpha = 0.2) +
-  #  theme_bw(base_size=15)
   #--> many points outside the range of the correction plane
   
   #calculate the adjustment (so the chill, which so far was not capured by krigging)
@@ -312,54 +349,124 @@ for(scen in scenarions){
   r.m <- mask(r, SA)
   
   chill_list <- append(chill_list, r.m)
-  
 
-  f_name <- paste('figures/interpolation/adjusted_chill_', scen, '.jpg', sep = '')
+  f_name <- paste('figures/interpolation/adjusted_chill_', scen, '.png', sep = '')
   
-  chill_map <- tm_shape(SA_test) +
-    tm_lines(col='grey') +
+  chill_map <- tm_shape(SA) +
+    tm_fill(col = 'grey10') +
+    tm_shape(SA_test) +
+    tm_lines(col = 'grey35') +
     tm_shape(r.m) +
-    tm_raster(palette = get_brewer_pal("RdBu", contrast = c(0, 0.75)),
-              midpoint = 30, 
-              title = paste(scen, "\nSafe Winter Chill \n(Chill Portions)\nCorrected for Tmin, Tmax", sep = ''),
-              breaks = seq(0, 100, by = 10), style = "cont", legend.reverse = TRUE) +
-    tm_shape(Porig) + 
-    tm_symbols(size = 0.2, shape = 4, col = 'black') +
+    tm_raster(palette = get_brewer_pal('RdYlBu', n = 20),
+              midpoint = 30,
+              title = 'Safe Winter Chill',
+              style = 'cont', legend.reverse = TRUE, breaks = seq(0, 100, by = 20),
+              legend.format = list(suffix = " CP", text.align = "center")) +
+    tm_shape(Porig) +
+    tm_symbols(size = 0.075, shape = 4, col = 'firebrick', alpha = 0.8) + 
     tm_shape(SA) +
-    tm_borders(col = 'black') +
-    tm_graticules(lines = F) +
-    tm_compass(position = c(0.64, 0.1)) +
-    tm_scale_bar(position = c(0.58, 0.01), bg.color = 'white') +
-    tm_layout(legend.outside = T, outer.margins = c(0.001, 0.001, 0, 0.001))
+    tm_borders(col = 'grey40') +
+    tm_graticules(lines = F, labels.size = 0.6, labels.col = "black") +
+    tm_compass(position = c(0.66, 0.85), text.size = 0.6) +
+    tm_scale_bar(position = c(0.57, 0.925), bg.color = 'transparent', text.size = 0.6, color.dark = "grey20") +
+    tm_add_legend(type = "line", labels = "Excluded", col = "grey35", lwd = 3) +
+    tm_add_legend(type = "symbol", labels = "  Weather station", shape = 4, size = 0.5, col = "firebrick") +
+    tm_layout(main.title = paste0("      ", scenarios_fixed[[scen]]),
+              main.title.position = "center",
+              main.title.size = 1.4,
+              main.title.color = "black",
+              legend.outside = F,
+              legend.title.size = 0.85,
+              legend.text.size = 0.65,
+              legend.position = c(0.665, 0.005),
+              outer.margins = c(0.001, 0.001, 0.001, 0.001),
+              bg.color = "black",
+              attr.color = "white",
+              outer.bg.color = "white")
   
   chill_map
   
-  tmap_save(chill_map, filename = f_name, height = height, width = width, units = 'cm')  
+  plot_list <- append(plot_list, list(chill_map))
+  
+  #tmap_save(chill_map, filename = f_name, height = height, width = width, units = 'cm')  
+  
+  
+  # Zoom-in Chile and Argentina
+  b <- bbox(Porig)
+  b[1, ] <- c(-74, -49)
+  b[2, ] <- c(-40, -30)
+  b <- bbox(t(b))
+  
+  chile <- tm_shape(SA, bbox = b) +
+    tm_fill(col = 'grey10') +
+    tm_shape(SA_test, bbox = b) +
+    tm_lines(col = 'grey35') +
+    tm_shape(r.m, bbox = b) +
+    tm_raster(palette = get_brewer_pal('RdYlBu', n = 20),
+              midpoint = 30,
+              title = 'Safe Winter Chill',
+              style = 'cont', legend.reverse = TRUE, breaks = seq(0, 100, by = 20),
+              legend.format = list(suffix = " CP", text.align = "center")) +
+    tm_shape(Porig, bbox = b) +
+    tm_symbols(size = 0.075, shape = 4, col = 'firebrick', alpha = 0.8) + 
+    tm_shape(SA, bbox = b) +
+    tm_borders(col = 'grey40') +
+    tm_graticules(lines = F, labels.size = 0.6, labels.col = "black") +
+    tm_compass(position = c(0.025, 0.9), text.size = 0.6) +
+    tm_scale_bar(position = c(0.645, 0.925), bg.color = 'transparent', text.size = 0.6, color.dark = "grey20",
+                 text.color = "black") +
+    tm_add_legend(type = "line", labels = "Excluded", col = "grey35", lwd = 3) +
+    tm_add_legend(type = "symbol", labels = "  Weather station", shape = 4, size = 0.5, col = "firebrick") +
+    tm_layout(main.title = paste0("      ", scenarios_fixed[[scen]]),
+              main.title.position = "center",
+              main.title.size = 1.4,
+              main.title.color = "black",
+              legend.outside = F,
+              legend.title.size = 0.85,
+              legend.text.size = 0.65,
+              legend.position = c(0.65, 0.001),
+              outer.margins = c(0.001, 0.001, 0.001, 0.001),
+              bg.color = "black",
+              attr.color = "white",
+              outer.bg.color = "white")
+    
+  chile
+  
+  chile_list <- append(chile_list, list(chile))
+  
+  #tmap_save(chile, filename = f_name, height = height, width = width, units = 'cm')  
+  
   
   new_seq <- seq(-50, 90, by = 10)
   
-  f_name <- paste('figures/interpolation/chill_correction_', scen, '.jpg', sep = '')
+  f_name <- paste('figures/interpolation/chill_correction_', scen, '.png', sep = '')
   
   chill_correction <- tm_shape(SA_test) +
-    tm_lines(col = "grey50") +
+    tm_lines(col = "grey") +
     tm_shape(raster_model_adjust) +
     tm_raster(palette = get_brewer_pal("RdBu", contrast = c(0, 0.75)),
               midpoint = 0,
-              title = paste(scen, "\nCorrection of\nwinter chill (Chill Portions)", sep = ''),
+              title = "Safe Winter Chill correction\n                 (CP)",
               breaks = new_seq, style = "cont", legend.reverse = TRUE) +
     tm_shape(Porig) +
     tm_symbols(size = 0.2, shape = 4, col = 'black') +
     tm_shape(SA) +
-    tm_borders(col = 'black') +
-    tm_graticules(lines = F) +
-    tm_compass(position = c(0.64, 0.1)) +
-    tm_scale_bar(position = c(0.58, 0.01), bg.color = 'white') +
-    tm_layout(legend.outside = T, outer.margins = c(0.001, 0.001, 0, 0.001))
+    tm_borders(col = 'grey40') +
+    tm_graticules(lines = F, labels.size = 0.6) +
+    tm_compass(position = c(0.67, 0.85), text.size = 0.6) +
+    tm_scale_bar(position = c(0.57, 0.925), bg.color = 'transparent', text.size = 0.6) +
+    tm_layout(legend.outside = F,
+              legend.text.size = 0.8,
+              legend.title.size = 1.2,
+              legend.height = 0.3,
+              outer.margins = c(0.001, 0.001, 0.001, 0.001))
   
   chill_correction
   
-  tmap_save(chill_correction, filename = f_name,height = height, width = width, units = 'cm')  
+  #tmap_save(chill_correction, filename = f_name, height = height, width = width, units = 'cm')  
+
 } #end of loop to create interpolation maps
+
 
 #########################
 ###compute change chill map
@@ -367,6 +474,8 @@ for(scen in scenarions){
 
 #change names in list to scenario names
 names(chill_list) <- scenarions
+names(plot_list) <- scenarions
+names(chile_list) <- scenarions
 
 # Generate a baseline raster scenario based on the median across historic simulated scenarios
 brick_raster <- brick(chill_list[2 : 11])
@@ -374,63 +483,99 @@ brick_raster <- brick(chill_list[2 : 11])
 # Estimate the median across raster layers
 median_raster_scen <- calc(brick_raster, median)
 
+# Create a list to save the plots
+change_maps <- list()
+
 #loop for change 2017 to future scenarios
 for(scen in scenarions[12 : 23]){
   #create file name
-  f_name <- paste('figures/interpolation/change_hist_sim_vs_', scen, '.jpg', sep = '')
+  f_name <- paste('figures/interpolation/change_hist_sim_vs_', scen, '.png', sep = '')
   
-  #split scenario name because so long
-  x <- strsplit(scen, split = '_')
-  
-  change_map <- tm_shape(SA_test) +
-    tm_lines(col = 'grey') +
+  change_map <- tm_shape(SA) +
+    tm_fill(col = 'grey10') +
+    tm_shape(SA_test) +
+    tm_lines(col = 'grey35') +
     tm_shape(chill_list[[scen]] - median_raster_scen) +
-    tm_raster(palette = get_brewer_pal("RdBu", contrast = c(0, 0.75)),
+    tm_raster(palette = get_brewer_pal('RdYlBu', n = 10),
               midpoint = 0,
-              title = paste('Median historic simulated to ', x[[1]][2], '\n', x[[1]][1], ' ',
-                            x[[1]][3], '\nchange in chill portions', sep = ''),
-              breaks = seq(-60, 10, by = 10), style = "cont", legend.reverse = TRUE) +
+              title = 'SWC relative to\n 1981 - 2017',
+              style = 'cont', legend.reverse = TRUE, breaks = seq(-40, 10, length.out = 6),
+              legend.format = list(suffix = " CP", text.align = "center")) +
     tm_shape(Porig) +
-    tm_symbols(size = 0.2, shape = 4, col = 'black') +
+    tm_symbols(size = 0.075, shape = 4, col = 'firebrick', alpha = 0.8) + 
     tm_shape(SA) +
-    tm_borders(col = 'black') +
-    tm_graticules(lines = F) +
-    tm_compass(position = c(0.64, 0.1)) +
-    tm_scale_bar(position = c(0.58, 0.01), bg.color = 'white') +
-    tm_layout(legend.outside = T, outer.margins = c(0.001, 0.001, 0, 0.001))
+    tm_borders(col = 'grey40') +
+    tm_graticules(lines = F, labels.size = 0.6, labels.col = "black") +
+    tm_compass(position = c(0.66, 0.85), text.size = 0.6) +
+    tm_scale_bar(position = c(0.57, 0.925), bg.color = 'transparent', text.size = 0.6, color.dark = "grey20") +
+    tm_add_legend(type = "line", labels = "Excluded", col = "grey35", lwd = 3) +
+    tm_add_legend(type = "symbol", labels = "  Weather station", shape = 4, size = 0.5, col = "firebrick") +
+    tm_layout(main.title = paste0("      ", scenarios_fixed[[scen]]),
+              main.title.position = "center",
+              main.title.size = 1.4,
+              main.title.color = "black",
+              legend.outside = F,
+              legend.title.size = 0.85,
+              legend.text.size = 0.65,
+              legend.position = c(0.665, 0.005),
+              outer.margins = c(0.001, 0.001, 0.001, 0.001),
+              bg.color = "black",
+              attr.color = "white",
+              outer.bg.color = "white")
   
   change_map
   
-  tmap_save(change_map, filename = f_name,height = height, width = width, units = 'cm')  
+  #tmap_save(change_map, filename = f_name, height = height, width = width, units = 'cm')  
+  
+  # Save the maps
+  change_maps <- append(change_maps, list(change_map))
   
 }
 
+# name the change_maps list
+names(change_maps) <- scenarions[12 : 23]
+
+
+
 #calculate change 1981 to 2017 (2017 minus 1981)
 scen <- scenarions[2]
-f_name <- paste('figures/interpolation/change_2017_', scen, '.jpg', sep = '')
+f_name <- paste('figures/interpolation/change_2017_', scen, '.png', sep = '')
 
-#split scenario name because so long
-x <- strsplit(scen, split = '_')
-
-change_map <- tm_shape(SA_test) +
-  tm_lines(col = 'grey') +
+change_map <- tm_shape(SA) +
+  tm_fill(col = 'grey10') +
+  tm_shape(SA_test) +
+  tm_lines(col = 'grey35') +
   tm_shape(chill_list[["scen_2017"]] - chill_list[[scen]]) +
-  tm_raster(palette = get_brewer_pal("RdBu", contrast = c(0, 0.75)),
+  tm_raster(palette = get_brewer_pal('RdYlBu', n = 20),
             midpoint = 0,
-            title = '1981 to 2017\nChange in chill portions',
-            style = "cont", legend.reverse = TRUE) +
+            title = 'Safe Winter Chill',
+            style = 'cont', legend.reverse = TRUE, breaks = seq(-15, 10, length.out = 6),
+            legend.format = list(suffix = " CP", text.align = "center")) +
   tm_shape(Porig) +
-  tm_symbols(size = 0.2, shape = 4, col = 'black') + 
+  tm_symbols(size = 0.075, shape = 4, col = 'firebrick', alpha = 0.8) + 
   tm_shape(SA) +
-  tm_borders(col = 'black') +
-  tm_graticules(lines = F) +
-  tm_compass(position = c(0.64, 0.1)) +
-  tm_scale_bar(position = c(0.58, 0.01), bg.color = 'white') +
-  tm_layout(legend.outside = T, outer.margins = c(0.001, 0.001, 0, 0.001))
+  tm_borders(col = 'grey40') +
+  tm_graticules(lines = F, labels.size = 0.6, labels.col = "black") +
+  tm_compass(position = c(0.66, 0.85), text.size = 0.6) +
+  tm_scale_bar(position = c(0.57, 0.925), bg.color = 'transparent', text.size = 0.6, color.dark = "grey20") +
+  tm_add_legend(type = "line", labels = "Excluded", col = "grey35", lwd = 3) +
+  tm_add_legend(type = "symbol", labels = "  Weather station", shape = 4, size = 0.5, col = "firebrick") +
+  tm_layout(main.title = "      Chill change 1981 - 2017",
+            main.title.position = "center",
+            main.title.size = 1.4,
+            main.title.color = "black",
+            legend.outside = F,
+            legend.title.size = 0.85,
+            legend.text.size = 0.65,
+            legend.position = c(0.665, 0.005),
+            outer.margins = c(0.001, 0.001, 0.001, 0.001),
+            bg.color = "black",
+            attr.color = "white",
+            outer.bg.color = "white")
 
 change_map
 
-tmap_save(change_map, filename = f_name, height = height, width = width, units = 'cm')  
+#tmap_save(change_map, filename = f_name, height = height, width = width, units = 'cm')  
 
 
 

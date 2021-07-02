@@ -1,0 +1,158 @@
+"Station name","Country","Database","Latitude","Longitude","Elevation","Percentage of data complete"
+"MATECANA","CO","GSOD","4.81 °N","75.74 °W",1346,90.6
+"ELDORADO INTL","CO","GSOD","4.7 °N","74.15 °W",2548.4,98.9
+"ALFONSO BONILLA ARAGON INTL","CO","GSOD","3.54 °N","76.38 °W",963.8,95.8
+"BOA VISTA","BR","GSOD","2.85 °N","60.69 °W",84.1,93.4
+"VAL DE CANS INTL","BR","GSOD","1.38 °S","48.48 °W",16.5,99.1
+"SIMON BOLIVAR INTL","EC","GSOD","2.16 °S","79.88 °W",5.8,97.4
+"SANTAREM","BR","GSOD","2.42 °S","54.79 °W",60.4,98.9
+"EDUARDO GOMES INTL","BR","GSOD","3.04 °S","60.05 °W",80.5,99.6
+"PONTA PELADA","BR","GSOD","3.15 °S","59.99 °W",81.4,98.2
+"CORONEL FRANCISCO SECADA VIGNETTA INTL","PE","GSOD","3.79 °S","73.31 °W",93.3,98.8
+"ALFREDO VASQUEZ COBO","CO","GSOD","4.19 °S","69.94 °W",84.4,96.2
+"CAPITAN FAP GUILLERMO CONCHA IBERICO","PE","GSOD","5.21 °S","80.62 °W",35.4,91.2
+"CAPT JOSE A  QUINONES GONZALES INTL","PE","GSOD","6.79 °S","79.83 °W",29.6,95.9
+"CAPITAN CARLOS MARTINEZ DE PINILLOS","PE","GSOD","8.08 °S","79.11 °W",32.3,93.1
+"CAP FAP DAVID ABENZUR RENGIFO INTL","PE","GSOD","8.38 °S","74.57 °W",156.4,94.8
+"HEROES DEL ACRE","BL","GSOD","11.04 °S","68.78 °W",271.9,90.9
+"JORGE CHAVEZ INTL","PE","GSOD","12.02 °S","77.11 °W",34.4,94.1
+"DEPUTADO LUIS EDUARDO MAGALHAES","BR","GSOD","12.91 °S","38.33 °W",19.5,99.5
+"TENIENTE ALEJANDRO VELASCO ASTETE INTL","PE","GSOD","13.54 °S","71.94 °W",3310.1,98.9
+"PISCO INTL","PE","GSOD","13.74 °S","76.22 °W",11.9,99
+"TTE AV JORGE HENRICH ARAUZ","BL","GSOD","14.82 °S","64.92 °W",155.1,94.4
+"MARECHAL RONDON","BR","GSOD","15.65 °S","56.12 °W",188.1,90.8
+"PRESIDENTE JUSCELINO KUBITSCHEK","BR","GSOD","15.86 °S","47.91 °W",1060.4,99.6
+"EL ALTO INTL","BL","GSOD","16.51 °S","68.19 °W",4061.5,99.5
+"JORGE WILSTERMAN","BL","GSOD","17.42 °S","66.18 °W",2548.1,99.4
+"EL TROMPILLO","BL","GSOD","17.81 °S","63.17 °W",417.9,93.9
+"CORONEL CARLOS CIRIANI SANTA ROSA INTL","PE","GSOD","18.05 °S","70.28 °W",468.8,91.7
+"CHACALLUTA","CL","GSOD","18.35 °S","70.34 °W",50.9,99.7
+"Chacalluta Arica Ap.","CL","CR2","18.35 °S","70.34 °W",63,100
+"Azapa","CL","CR2","18.52 °S","70.18 °W",365,96
+"GOIABEIRAS","BR","GSOD","20.26 °S","40.29 °W",3.4,97.7
+"CAMPO GRANDE","BR","GSOD","20.47 °S","54.67 °W",558.7,99.3
+"Diego Aracena Iquique Ap.","CL","CR2","20.54 °S","70.18 °W",52,100
+"Chiu-Chiu","CL","CR2","22.34 °S","68.64 °W",2524,93.5
+"El Loa Calama Ad.","CL","CR2","22.5 °S","68.91 °W",2293,99.8
+"GALEAO ANTONIO CARLOS JOBIM","BR","GSOD","22.81 °S","43.24 °W",8.5,99.6
+"SANTOS DUMONT","BR","GSOD","22.91 °S","43.16 °W",3.4,95.5
+"VIRACOPOS","BR","GSOD","23.01 °S","47.13 °W",661.4,99.3
+"LONDRINA 2","BR","GSOD","23.33 °S","51.13 °W",569.1,95.4
+"CERRO MORENO INTL","CL","GSOD","23.44 °S","70.44 °W",138.7,99.6
+"Cerro Moreno Antofagasta Ap.","CL","CR2","23.45 °S","70.44 °W",113,100
+"CONGONHAS","BR","GSOD","23.63 °S","46.66 °W",801.9,99.3
+"JUJUY","AR","GSOD","24.39 °S","65.1 °W",920.2,98.7
+"SALTA","AR","GSOD","24.86 °S","65.49 °W",1246,93.5
+"SILVIO PETTIROSSI INTL","PA","GSOD","25.24 °S","57.52 °W",89,99.4
+"AFONSO PENA","BR","GSOD","25.53 °S","49.18 °W",910.7,98.6
+"CATARATAS INTL","BR","GSOD","25.6 °S","54.49 °W",239.9,93.2
+"CATARATAS DEL IGUAZU","AR","GSOD","25.74 °S","54.47 °W",279.2,95
+"FORMOSA","AR","GSOD","26.21 °S","58.23 °W",59.1,96.5
+"POSADAS","AR","GSOD","27.39 °S","55.97 °W",131.1,99.3
+"CORRIENTES","AR","GSOD","27.45 °S","58.76 °W",61.9,95.3
+"RESISTENCIA","AR","GSOD","27.45 °S","59.06 °W",52.7,99.5
+"HERCILIO LUZ","BR","GSOD","27.67 °S","48.55 °W",6.1,96.5
+"SANTIAGO DEL ESTERO","AR","GSOD","27.77 °S","64.31 °W",199.9,98.9
+"Lautaro Embalse","CL","CR2","27.98 °S","70 °W",1110,97.9
+"CATAMARCA","AR","GSOD","28.6 °S","65.75 °W",463.9,97.5
+"Santa Juana","CL","CR2","28.67 °S","70.66 °W",560,98.3
+"RECONQUISTA AERO","AR","GSOD","29.18 °S","59.7 °W",48,94.4
+"El Trapiche","CL","CR2","29.37 °S","71.12 °W",300,95.7
+"LA RIOJA","AR","GSOD","29.38 °S","66.8 °W",437.7,98.7
+"PASO DE LOS LIBRES","AR","GSOD","29.69 °S","57.15 °W",70.1,99
+"CERES","AR","GSOD","29.88 °S","61.95 °W",88,98.5
+"LA FLORIDA","CL","GSOD","29.92 °S","71.2 °W",146.6,98.3
+"La Florida La Serena Ad.","CL","CR2","29.92 °S","71.2 °W",142,99.9
+"Rivadavia","CL","CR2","29.98 °S","70.56 °W",820,97.1
+"SALGADO FILHO","BR","GSOD","29.99 °S","51.17 °W",3.4,94.9
+"La Ortiga","CL","CR2","30.19 °S","70.48 °W",1560,97.3
+"Hurtado","CL","CR2","30.29 °S","70.7 °W",1100,93.5
+"ARTIGAS INTL","UY","GSOD","30.4 °S","56.51 °W",128,92.7
+"Paloma Embalse","CL","CR2","30.7 °S","71.04 °W",320,96.6
+"PRESIDENTE GENERAL DON OSCAR D GESTIDO","UY","GSOD","30.98 °S","55.48 °W",223,93.7
+"Cogoti Embalse","CL","CR2","31.01 °S","71.09 °W",740,96.6
+"Las Ramadas","CL","CR2","31.02 °S","70.59 °W",1380,95.9
+"COMODORO PIERRESTEGUI","AR","GSOD","31.3 °S","58 °W",34.1,98.7
+"AMBROSIO L V TARAVELLA","AR","GSOD","31.32 °S","64.21 °W",488.9,99.5
+"NUEVA HESPERIDES INTL","UY","GSOD","31.43 °S","57.98 °W",57,98
+"SAN JUAN","AR","GSOD","31.57 °S","68.42 °W",597.1,99.2
+"Illapel Dga","CL","CR2","31.64 °S","71.19 °W",290,96.5
+"SAUCE VIEJO","AR","GSOD","31.71 °S","60.81 °W",17.1,90.3
+"GENERAL URQUIZA","AR","GSOD","31.8 °S","60.48 °W",74.1,92.2
+"La Tranquilla","CL","CR2","31.9 °S","70.67 °W",1000,97.3
+"Los Condores","CL","CR2","32.11 °S","71.31 °W",190,93.8
+"Alicahue","CL","CR2","32.34 °S","70.75 °W",750,95
+"MARCOS JUAREZ","AR","GSOD","32.68 °S","62.16 °W",110,98.9
+"PASO DE LOS TOROS","UY","GSOD","32.8 °S","56.52 °W",75,94.5
+"EL PLUMERILLO","AR","GSOD","32.83 °S","68.79 °W",704.1,99.5
+"Vilcuya","CL","CR2","32.86 °S","70.47 °W",1100,94.8
+"Quillota","CL","CR2","32.9 °S","71.21 °W",130,95.1
+"ROSARIO","AR","GSOD","32.9 °S","60.78 °W",25.9,97.5
+"GUALEGUAYCHU","AR","GSOD","33.01 °S","58.61 °W",22.9,98.6
+"RIO CUARTO AREA DE MATERIAL","AR","GSOD","33.08 °S","64.26 °W",420.9,98.6
+"Lliu-Lliu Embalse","CL","CR2","33.1 °S","71.21 °W",260,95.3
+"Lago Peuelas","CL","CR2","33.15 °S","71.56 °W",360,95.6
+"SAN LUIS","AR","GSOD","33.27 °S","66.36 °W",709.9,97.4
+"Pudahuel Santiago","CL","CR2","33.39 °S","70.79 °W",482,100
+"ARTURO MERINO BENITEZ INTL","CL","GSOD","33.39 °S","70.79 °W",474,99.7
+"Cerro Calan","CL","CR2","33.4 °S","70.54 °W",848,99.9
+"Los Panguiles","CL","CR2","33.44 °S","71.03 °W",190,93.4
+"Quinta Normal Santiago","CL","CR2","33.44 °S","70.68 °W",527,100
+"Eulogio Sanchez Tobalaba Ad.","CL","CR2","33.45 °S","70.55 °W",650,97.4
+"Santo Domingo Ad.","CL","CR2","33.66 °S","71.61 °W",75,98.1
+"Pirque","CL","CR2","33.67 °S","70.59 °W",659,92.6
+"VILLA REYNOLDS","AR","GSOD","33.73 °S","65.39 °W",484.9,90.9
+"LAGUNA DE LOS PATOS INTL","UY","GSOD","34.46 °S","57.77 °W",21,94.8
+"ROCHA","UY","GSOD","34.48 °S","54.3 °W",18,96.7
+"JUNIN","AR","GSOD","34.55 °S","60.93 °W",79.9,99.2
+"AEROPARQUE JORGE NEWBERY","AR","GSOD","34.56 °S","58.42 °W",5.5,95.3
+"SAN RAFAEL","AR","GSOD","34.59 °S","68.4 °W",752.9,98.7
+"MINISTRO PISTARINI","AR","GSOD","34.82 °S","58.54 °W",20.4,99.6
+"CARRASCO INTL","UY","GSOD","34.84 °S","56.03 °W",32,99.7
+"General Freire Curico Ad.","CL","CR2","34.97 °S","71.22 °W",225,99.9
+"Potrero Grande","CL","CR2","35.18 °S","71.1 °W",445,99
+"Talca U.C.","CL","CR2","35.44 °S","71.62 °W",130,91.5
+"MALARGUE","AR","GSOD","35.49 °S","69.57 °W",1430.1,94.7
+"Colorado","CL","CR2","35.64 °S","71.26 °W",420,90.4
+"Parral","CL","CR2","36.19 °S","71.83 °W",175,99.2
+"Digua Embalse","CL","CR2","36.26 °S","71.55 °W",390,99.7
+"Santa Rosa Aero","CL","CR2","36.57 °S","64.27 °W",192,90.6
+"Bernardo O'Higgins Chillan Ad.","CL","CR2","36.59 °S","72.04 °W",151,99.5
+"SANTA ROSA","AR","GSOD","36.59 °S","64.28 °W",192,97.7
+"CARRIEL SUR INTL","CL","GSOD","36.77 °S","73.06 °W",7.9,99.5
+"Carriel Sur Concepcion.","CL","CR2","36.78 °S","73.06 °W",12,99.9
+"Diguillin","CL","CR2","36.87 °S","71.64 °W",670,96.3
+"TANDIL","AR","GSOD","37.24 °S","59.23 °W",175,97.2
+"MAR DEL PLATA","AR","GSOD","37.93 °S","57.57 °W",21.6,98.4
+"Traiguen","CL","CR2","38.26 °S","72.65 °W",234,91.6
+"COMANDANTE ESPORA","AR","GSOD","38.73 °S","62.17 °W",75,97.5
+"Maquehue Temuco Ad.","CL","CR2","38.77 °S","72.64 °W",92,99
+"PRESIDENTE PERON","AR","GSOD","38.95 °S","68.16 °W",272.8,97
+"Neuquen","AR","SMN - INTA","38.95 °S","67.97 °W",271,99.5
+"Ascasubi","AR","SMN - INTA","39.38 °S","62.62 °W",22,96
+"Pichoy Valdivia Ad.","CL","CR2","39.65 °S","73.08 °W",21,99.9
+"Adolfo Matthei","CL","CR2","40.59 °S","73.11 °W",55,91.5
+"Canal Bajo Osorno Ad.","CL","CR2","40.6 °S","73.06 °W",61,99
+"Viedma","AR","SMN - INTA","40.85 °S","63.02 °W",7,97
+"GOBERNADOR CASTELLO","AR","GSOD","40.87 °S","63 °W",6.1,94.2
+"SAN CARLOS DE BARILOCHE","AR","GSOD","41.15 °S","71.16 °W",846.1,98
+"Maquinchao","AR","SMN - INTA","41.25 °S","68.73 °W",887,96.3
+"El Tepual Puerto Montt Ap.","CL","CR2","41.44 °S","73.1 °W",85,100
+"EL TEPUAL INTL","CL","GSOD","41.44 °S","73.09 °W",89.6,99.2
+"ESQUEL","AR","GSOD","42.91 °S","71.14 °W",798.9,96.1
+"Futaleufu Ad.","CL","CR2","43.19 °S","71.85 °W",347,92.7
+"ALMIRANTE ZAR","AR","GSOD","43.21 °S","65.27 °W",43,98.5
+"Trelew","AR","SMN - INTA","43.23 °S","65.32 °W",10,99
+"Teniente Vidal Coyhaique Ad.","CL","CR2","45.59 °S","72.11 °W",310,100
+"COMODORO RIVADAVIA","AR","GSOD","45.78 °S","67.47 °W",57.9,99
+"Balmaceda Ad.","CL","CR2","45.91 °S","71.69 °W",517,99.9
+"BALMACEDA","CL","GSOD","45.92 °S","71.69 °W",524.9,95
+"Chile Chico Ad.","CL","CR2","46.58 °S","71.69 °W",306,93.6
+"Lord Cochrane Ad.","CL","CR2","47.24 °S","72.59 °W",204,95.5
+"SAN JULIAN","AR","GSOD","49.31 °S","67.8 °W",57.9,93.3
+"Torres Del Paine","CL","CR2","51.18 °S","72.97 °W",25,91.6
+"RIO GALLEGOS","AR","GSOD","51.61 °S","69.31 °W",18.6,98.6
+"CARLOS IBANEZ DEL CAMPO INTL","CL","GSOD","53 °S","70.86 °W",42.4,99.1
+"Punta Arenas","CL","CR2","53 °S","70.84 °W",38,100
+"Punta Arenas 2","CL","CR2","53.12 °S","70.88 °W",5,100
+"RIO GRANDE 2","AR","GSOD","53.78 °S","67.75 °W",19.8,95.1
