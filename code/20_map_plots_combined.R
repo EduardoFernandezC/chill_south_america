@@ -2,6 +2,9 @@
 # to run the for loop for generating the figures. Make sure the save calls are commented to avoid saving the plots to the
 # folder again
 
+# Load the data for the figures
+load("figures.RData")
+
 # Figure 2 (map for the figure)
 figure_2 <- tm_shape(SA) +
   tm_fill(col = 'grey10') +

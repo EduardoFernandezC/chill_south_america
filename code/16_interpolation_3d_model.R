@@ -258,20 +258,28 @@ for(scen in scenarions){
   model_krigged_temp <- sapply(1 : nrow(t_both), function(i) get_chill_correction(t_both[i, 1], t_both[i, 2]))
   model_real_temp <- sapply(1:nrow(t_both_real), function(i) get_chill_correction(t_both_real[i, 1], t_both_real[i, 2]))
   
-  #test_corr_df <- data.frame('min_temp_jul' = as.vector(mat_real_tmin),'max_temp_jul' = as.vector(mat_real_tmax))
+  # test_corr_df <- data.frame('min_temp_jul' = as.vector(mat_real_tmin),'max_temp_jul' = as.vector(mat_real_tmax))
+  # 
+  # #see where the datapoints are in the correction plane
+  # hatched_areas <- ggplot(melted,
+  #       aes(x = min_temp_jul, y = max_temp_jul, z = value)) +
+  #   geom_point(data = test_corr_df,
+  #              aes(x = min_temp_jul, y = max_temp_jul, z = NULL),
+  #              size=0.7, alpha = 0.5) +
+  #   geom_contour_fill(alpha = 0.5, color = "grey40") +
+  #   geom_text_contour(stroke = 0.2) +
+  #   scale_fill_gradientn(colours = alpha(matlab.like(15)),
+  #                        name = "Safe Winter Chill\n          (CP)", trans = 'reverse') +
+  #   labs(y = "Maximum temperature in July (°C)",
+  #        x = "Minimum temperature in July (°C)") +
+  #   theme_bw() +
+  #   theme(legend.position = c(0.85, 0.25),
+  #         legend.background = element_blank())
+  # 
+  # hatched_areas <- cowplot::ggdraw(align_legend(hatched_areas))
+  # 
+  # ggsave("figures/final_figures/figure_S2.png", width = 12, height = 10, units = "cm", dpi = 600)
   
-  #see where the datapoints are in the correction plane
-  #ggplot(melted,
-  #       aes(x=min_temp_jul,y=max_temp_jul,z=value)) +
-  #  geom_contour_fill(bins=100) +
-  #  scale_fill_gradientn(colours=alpha(matlab.like(15)),
-  #                       name="Safe Chill Units", trans = 'reverse') +
-  #  geom_contour(col="black")  +
-  #  geom_text_contour(stroke = 0.2) +
-  #  geom_point(data=test_corr_df,
-  #             aes(x=min_temp_jul,y=max_temp_jul,z=NULL),
-  #             size=0.7, alpha = 0.2) +
-  #  theme_bw(base_size=15)
   #--> many points outside the range of the correction plane
   
   #calculate the adjustment (so the chill, which so far was not capured by krigging)
