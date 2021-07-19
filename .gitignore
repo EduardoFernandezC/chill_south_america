@@ -46,6 +46,7 @@ data/*.rar
 data/future_temps/
 data/projections/
 data/patched_temps/
+data/re_analysis/
 
 # manuscript
 manuscript/

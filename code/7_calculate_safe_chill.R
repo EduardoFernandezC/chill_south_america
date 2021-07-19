@@ -8,9 +8,11 @@ library(reshape2)
 
 #read historic chill calculated on weather generator data
 #setwd('data/projections/hist_sim_chill/')
-path <- 'data/projections/hist_sim_chill/'
+path <- 'data/re_analysis/simulated_chill/'
 temp <- list.files(path, pattern = "*.csv")
 hist_sim_chill <- lapply(temp, function (x) read.csv(paste0(path, x)))
+
+names(hist_sim_chill) <- temp
 
 #calculate safe chill for each station and year
 res <- lapply(hist_sim_chill, function(x){
@@ -39,7 +41,7 @@ hist_sim_chill <- data.frame('station_name' = station_names, 'year' = years, 'sa
 
 #read hitoric chill calculated on weather generator data
 #setwd('../../future_chill/')
-path <- 'data/future_chill/'
+path <- 'data/re_analysis/future_chill/'
 temp <- list.files(path, pattern = "*.csv")
 future_sim_chill <- lapply(temp, function (x) read.csv(paste0(path, x)))
 
@@ -95,7 +97,7 @@ future_sim_chill <- future_sim_chill %>%
 # Add the actual observed safe winter chill to the table
 #read historic chill calculated on weather station data
 
-path <- 'data/projections/observed/'
+path <- 'data/re_analysis/observed_chill/'
 temp <- list.files(path, pattern = "*.csv")
 hist_obs_chill <- lapply(temp, function (x) read.csv(paste0(path, x)))
 
@@ -118,17 +120,19 @@ hist_obs_chill <- data.frame('station_name' = station_names, 'observed_SWC' = un
 ######## combine all chill projections to one big file
 
 #read the station names
-stations <- read.csv('data/weather_stations.csv')
+stations <- read.csv('data/re_analysis/weather_stations_final.csv')
+
+colnames(stations)[which(colnames(stations) == "Name")] <- "station_name"
 
 # Warning here! The stations data frame still shows two 'Punta Arenas'. This will fix the issue by adding a '2' to the
 # second one
 
-stations[stations$station_name == 'Punta Arenas', "station_name"] <- c("Punta Arenas", "Punta Arenas 2")
+stations[stations$station_name == 'Punta Arenas', "station_name"] <- c("Punta Arenas", "Punta Arenas2")
 
 #in each columns should be the chill values of a specific year for all the stations --> I need to "de-melt" them
 #use function dcast from reshape2 for this
 
-hist_sim_chill <- dcast(hist_sim_chill,station_name ~ year)
+hist_sim_chill <- dcast(hist_sim_chill, station_name ~ year)
 
 #melt table so model output is specified in one column (optimisitic, pessimisitic...) we have
 future_sim_chill <- melt(future_sim_chill,c('station_name', 'rcp', 'year'))
@@ -140,5 +144,21 @@ intermediate <- merge.data.frame(stations, hist_obs_chill, by = 'station_name')
 intermediate <- merge.data.frame(intermediate, hist_sim_chill, by = 'station_name')
 all_projections <- merge.data.frame(intermediate, future_sim_chill, by = 'station_name')
 
+# Add the country to missing WS
+all_projections[is.na(all_projections$CTRY) & !is.na(all_projections$Cod_Station), "CTRY"] <- "CL"
+all_projections[is.na(all_projections$CTRY) & is.na(all_projections$Cod_Station), "CTRY"] <- "AR"
+
+# Remove not used columns
+all_projections <- dplyr::select(all_projections,
+                                 -c("chillR_code", "BEGIN", "END", "distance", "elevation_diff", "Perc_Tmin",
+                                    "Perc_Tmax", "Cod_Station", "Institution", "Source", "N_Obs", "Perc_days_complete"))
+
+
+
 #save the chill values to one table. this will be the key for all further scripts
-write.csv(all_projections,'data/all_chill_projections.csv', row.names = FALSE)
+write.csv(all_projections, 'data/re_analysis/all_chill_projections.csv', row.names = FALSE)
+
+
+
+
+

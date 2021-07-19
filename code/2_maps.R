@@ -86,7 +86,7 @@ ggsave("figures/figure_1.png", height = 5.05, width = 6.5, dpi = 600)
 
 # Remake figure 1 using tmap
 
-stations <- read.csv("data/weather_info.csv")
+stations <- read.csv("data/re_analysis/weather_stations_final.csv")
 
 # Add the data base column
 
@@ -103,7 +103,7 @@ stations_sp <-  SpatialPointsDataFrame(stations[, c("Longitude", "Latitude")],
 
 
 # Read the shape file from SA
-SA <- readOGR('data/sa_outline/SA_outline.shp')
+SA <- readOGR('data/sa_outline/SA_outline_2.shp')
 
 # Replace point boundary extent with that of South America to make sure the interpolation is done for the whole extend of south america
 stations_sp@bbox <- SA@bbox

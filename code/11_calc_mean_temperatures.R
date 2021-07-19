@@ -9,9 +9,13 @@ library(tidyverse)
 #read historic temperatures. These are generated from actual historic records plus a patching procedure plus 
 # an interpolating procedure as the latest option for filling the gaps...
 #setwd('data/patched_temps/')
-path <- 'data/patched_temps/'
+path <- 'data/re_analysis/fixed_temps/'
 temp <- list.files(path, pattern = "*.csv")
+
 temp_files <- lapply(temp, function (x) read.csv(paste0(path, x)))
+
+# Compatibility adjustment for functions
+temp <- str_replace(temp, "patched_fixed", "WS")
 
 #just a test to see if it works
 temp1 <- read.csv(paste0(path, 'WS_1_ARTURO MERINO BENITEZ INTL.csv'))
@@ -47,6 +51,9 @@ calc_tmean(temp_files[[1]], month = 7, min_year = 1980, max_year = 2000)
 #remove names of vectotr
 station_names <- unname(station_names)
 
+# Correct Punta Arenas 2
+station_names[which(station_names == "Punta Arenas")] <- c("Punta Arenas", "Punta Arenas2")
+
 #calculate mean temperature and sd of mean temp of jun, jul, aug
 t_jul <- t(sapply(temp_files, calc_tmean, 7, 2000,1980))
 t_jul_sd <- t(sapply(temp_files, calc_tmean_sd, 7,2000,1980))
@@ -65,16 +72,16 @@ colnames(df_temp) <- c('Name', 'obs_avg_temp_jul','obs_tmin_jul','obs_tmax_jul',
 df_temp[,-1] <- round(df_temp[,-1],digits = 2)
 
 #read stations data frame
-stations <- read.csv('data/all_chill_projections.csv')
+stations <- read.csv('data/re_analysis/all_chill_projections.csv')
 
 #combine df of stations and observed temperatures
 stations <- merge.data.frame(stations, df_temp, by.x = 'station_name', by.y = 'Name')
 
 #update the stations dataframe
-write.csv(stations, file = 'data/all_chill_projections.csv', row.names = F)
+write.csv(stations, file = 'data/re_analysis/all_chill_projections.csv', row.names = F)
 
 # Read the data from the folder
-stations <- read.csv("data/all_chill_projections.csv")
+stations <- read.csv("data/re_analysis/all_chill_projections.csv")
 
 
 # Some quality check plots
@@ -160,7 +167,7 @@ ggplot(stations,aes(x= obs_tmin_jul, y = min_temp_jul)) +
 ggsave("figures/outliers_tmin_annotated.png")
 
 #### Tmax
-df <- data.frame(obs_tmax_jul = -2:35, max_temp_jul = -2:35)
+df <- data.frame(obs_tmax_jul = -5:35, max_temp_jul = -5:35)
 
 ggplot(stations,aes(x= obs_tmax_jul, y = max_temp_jul)) + 
   geom_ribbon(data = df, aes(ymin = max_temp_jul -2, ymax = max_temp_jul +2), fill="grey", alpha=.5)+
@@ -199,14 +206,14 @@ ggsave("figures/outliers_tmax_annotated.png")
 sum((stations$outlier_tmin_jul | stations$outlier_tmax_jul)) 
 
 #update the stations dataframe
-write.csv(stations, file = 'data/all_chill_projections.csv', row.names = F)
+write.csv(stations, file = 'data/re_analysis/all_chill_projections.csv', row.names = F)
 
 
 # Create one figure including the outliers for tmin and tmax
 
-stations <- read.csv("data/all_chill_projections.csv")
+stations <- read.csv("data/re_analysis/all_chill_projections.csv")
 
-stations_tmin <- select(stations, station_name, min_temp_jul, obs_tmin_jul)
+stations_tmin <- dplyr::select(stations, station_name, min_temp_jul, obs_tmin_jul)
 
 colnames(stations_tmin) <- c("station_name", "WorldClim", "On-site")
 
@@ -214,7 +221,7 @@ stations_tmin["Var"] <- "Tmin"
 
 
 # Tmax
-stations_tmax <- select(stations, station_name, max_temp_jul, obs_tmax_jul)
+stations_tmax <- dplyr::select(stations, station_name, max_temp_jul, obs_tmax_jul)
 
 colnames(stations_tmax) <- c("station_name", "WorldClim", "On-site")
 
@@ -239,16 +246,16 @@ ggplot(stations_both, aes(`On-site`, WorldClim)) +
     box.padding = unit(0.35, "lines"),
     point.padding = unit(0.3, "lines"),
     min.segment.length = 0,
-    nudge_x = 20,
-    nudge_y = 20,
-    max.overlaps = 20,
+    nudge_x = 5,
+    nudge_y = 5,
+    max.overlaps = 25,
     direction = "both",
-    force = 20) +
+    force = 30) +
   xlab("On-site data (°C)") +
   ylab("WorldClim data (°C)") +
   theme_bw(base_size = 14)
 
-ggsave("figures/final_figures/figure_S1.png", height = 19, width = 17, units = "cm", dpi = 600)
+ggsave("figures/final_figures/figure_S1_b.png", height = 19, width = 17, units = "cm", dpi = 600)
 
 
 

@@ -52,7 +52,7 @@ get_chill_correction <-  function(tmin, tmax, lookup = pred){
 #####read data and prepare grid
 
 #read station coordinates with the projected chill (future and historic)
-stations <- read.csv('data/all_chill_projections.csv')
+stations <- read.csv('data/re_analysis/all_chill_projections.csv')
 
 #save scenario names to vector
 scenarions <- colnames(stations)[6:28]
@@ -60,10 +60,10 @@ scenarions <- colnames(stations)[6:28]
 #trnasform to spatial dataframe
 Porig<-SpatialPointsDataFrame(stations[,c("Longitude","Latitude")],
                               proj4string=CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"),
-                              data=stations[,c(1,5:34,48,50)])
+                              data = dplyr::select(stations, -Latitude, -Longitude))
 
 #outline of south america
-SA <- readOGR('data/sa_outline/SA_outline.shp')
+SA <- readOGR('data/sa_outline/SA_outline_2.shp')
 
 # Replace point boundary extent with that of South America to make sure the interpolation is done for the whole extend of south america
 Porig@bbox <- SA@bbox
@@ -110,12 +110,12 @@ for(rep in 1 : repititions){
     train_df <-as.data.frame(rbindlist(split_df[-i]))
     train_df <- SpatialPointsDataFrame(train_df[,c("Longitude","Latitude")],
                                        proj4string=CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"),
-                                       data=train_df[,c(1,5:34,48,50)])
+                                       data = dplyr::select(train_df, -Latitude, -Longitude))
     
     eval_df_original <- split_df[[i]]
     eval_df_original <- SpatialPointsDataFrame(eval_df_original[,c("Longitude","Latitude")],
                                       proj4string=CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"),
-                                      data=eval_df_original[,c(1,5:34,48,50)])
+                                      data = dplyr::select(eval_df_original, -Latitude, -Longitude))
     
     
     
@@ -295,11 +295,11 @@ for(rep in 1 : repititions){
 }
 
 # Save the final data frame after running the loop with 3 repetitions for all the scenarios
-write.csv(eval_df_final, "data/cross_validation_raw.csv", row.names = FALSE)
+write.csv(eval_df_final, "data/re_analysis/cross_validation_raw.csv", row.names = FALSE)
 
 # Load the file from folder
 
-eval_df_final <- read.csv("data/cross_validation_raw.csv")
+eval_df_final <- read.csv("data/re_analysis/cross_validation_raw.csv")
 
 #summarise residuals, select only columns with residual values
 # eval_df_final <- transform(eval_df_final, mean_residual=apply(eval_df_final[,4:(4+repititions-1)],1, mean, na.rm = TRUE))
@@ -398,5 +398,5 @@ chill_residual <- tm_shape(SA, bbox = b) +
 
 chill_residual
 
-tmap_save(chill_residual, 'figures/final_figures/figure_7.png',
+tmap_save(chill_residual, 'figures/final_figures/figure_7_b.png',
           height = 11, width = 11, units = 'cm')

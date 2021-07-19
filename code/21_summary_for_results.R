@@ -93,6 +93,8 @@ median(raster::extract(chill_list[["rcp45_2050_pessimistic"]], brazil), na.rm = 
 quantile(raster::extract(chill_list[["rcp45_2050_pessimistic"]], brazil), 0.05, na.rm = TRUE)
 quantile(raster::extract(chill_list[["rcp45_2050_pessimistic"]], brazil), 0.95, na.rm = TRUE)
 
+median(raster::extract(chill_list[["rcp45_2050_intermediate"]], brazil), na.rm = TRUE)
+
 median(raster::extract(chill_list[["rcp45_2050_optimistic"]], brazil), na.rm = TRUE)
 quantile(raster::extract(chill_list[["rcp45_2050_optimistic"]], brazil), 0.05, na.rm = TRUE)
 quantile(raster::extract(chill_list[["rcp45_2050_optimistic"]], brazil), 0.95, na.rm = TRUE)
@@ -136,6 +138,8 @@ median(raster::extract(chill_list[["rcp45_2050_pessimistic"]], central_valley), 
 quantile(raster::extract(chill_list[["rcp45_2050_pessimistic"]], central_valley), 0.05, na.rm = TRUE)
 quantile(raster::extract(chill_list[["rcp45_2050_pessimistic"]], central_valley), 0.95, na.rm = TRUE)
 
+median(raster::extract(chill_list[["rcp45_2050_intermediate"]], central_valley), na.rm = TRUE)
+
 median(raster::extract(chill_list[["rcp45_2050_optimistic"]], central_valley), na.rm = TRUE)
 quantile(raster::extract(chill_list[["rcp45_2050_optimistic"]], central_valley), 0.05, na.rm = TRUE)
 quantile(raster::extract(chill_list[["rcp45_2050_optimistic"]], central_valley), 0.95, na.rm = TRUE)
@@ -162,6 +166,27 @@ chill_list[["rcp85_2085_pessimistic"]] - median_raster_scen
 chill_list[["rcp85_2085_optimistic"]] - median_raster_scen
 
 
+# Central valley
+# RCP4.5 - 2050
+median(raster::extract(chill_list[["rcp45_2050_pessimistic"]] - median_raster_scen, central_valley), na.rm = TRUE)
+quantile(raster::extract(chill_list[["rcp45_2050_pessimistic"]] - median_raster_scen, central_valley), 0.05, na.rm = TRUE)
+quantile(raster::extract(chill_list[["rcp45_2050_pessimistic"]] - median_raster_scen, central_valley), 0.95, na.rm = TRUE)
+
+median(raster::extract(chill_list[["rcp45_2050_optimistic"]] - median_raster_scen, central_valley), na.rm = TRUE)
+quantile(raster::extract(chill_list[["rcp45_2050_optimistic"]] - median_raster_scen, central_valley), 0.05, na.rm = TRUE)
+quantile(raster::extract(chill_list[["rcp45_2050_optimistic"]] - median_raster_scen, central_valley), 0.95, na.rm = TRUE)
+
+
+# RCP8.5 - 2085
+median(raster::extract(chill_list[["rcp85_2085_pessimistic"]] - median_raster_scen, central_valley), na.rm = TRUE)
+quantile(raster::extract(chill_list[["rcp85_2085_pessimistic"]] - median_raster_scen, central_valley), 0.05, na.rm = TRUE)
+quantile(raster::extract(chill_list[["rcp85_2085_pessimistic"]] - median_raster_scen, central_valley), 0.95, na.rm = TRUE)
+
+median(raster::extract(chill_list[["rcp85_2085_optimistic"]] - median_raster_scen, central_valley), na.rm = TRUE)
+quantile(raster::extract(chill_list[["rcp85_2085_optimistic"]] - median_raster_scen, central_valley), 0.05, na.rm = TRUE)
+quantile(raster::extract(chill_list[["rcp85_2085_optimistic"]] - median_raster_scen, central_valley), 0.95, na.rm = TRUE)
+
+
 # Northern Patagonia, Argentina
 # RCP4.5 - 2050
 median(raster::extract(chill_list[["rcp45_2050_pessimistic"]] - median_raster_scen, patagonia), na.rm = TRUE)
@@ -182,26 +207,6 @@ median(raster::extract(chill_list[["rcp85_2085_optimistic"]] - median_raster_sce
 quantile(raster::extract(chill_list[["rcp85_2085_optimistic"]] - median_raster_scen, patagonia), 0.05, na.rm = TRUE)
 quantile(raster::extract(chill_list[["rcp85_2085_optimistic"]] - median_raster_scen, patagonia), 0.95, na.rm = TRUE)
 
-
-# Central valley
-# RCP4.5 - 2050
-median(raster::extract(chill_list[["rcp45_2050_pessimistic"]] - median_raster_scen, central_valley), na.rm = TRUE)
-quantile(raster::extract(chill_list[["rcp45_2050_pessimistic"]] - median_raster_scen, central_valley), 0.05, na.rm = TRUE)
-quantile(raster::extract(chill_list[["rcp45_2050_pessimistic"]] - median_raster_scen, central_valley), 0.95, na.rm = TRUE)
-
-median(raster::extract(chill_list[["rcp45_2050_optimistic"]] - median_raster_scen, central_valley), na.rm = TRUE)
-quantile(raster::extract(chill_list[["rcp45_2050_optimistic"]] - median_raster_scen, central_valley), 0.05, na.rm = TRUE)
-quantile(raster::extract(chill_list[["rcp45_2050_optimistic"]] - median_raster_scen, central_valley), 0.95, na.rm = TRUE)
-
-
-# RCP8.5 - 2085
-median(raster::extract(chill_list[["rcp85_2085_pessimistic"]] - median_raster_scen, central_valley), na.rm = TRUE)
-quantile(raster::extract(chill_list[["rcp85_2085_pessimistic"]] - median_raster_scen, central_valley), 0.05, na.rm = TRUE)
-quantile(raster::extract(chill_list[["rcp85_2085_pessimistic"]] - median_raster_scen, central_valley), 0.95, na.rm = TRUE)
-
-median(raster::extract(chill_list[["rcp85_2085_optimistic"]] - median_raster_scen, central_valley), na.rm = TRUE)
-quantile(raster::extract(chill_list[["rcp85_2085_optimistic"]] - median_raster_scen, central_valley), 0.05, na.rm = TRUE)
-quantile(raster::extract(chill_list[["rcp85_2085_optimistic"]] - median_raster_scen, central_valley), 0.95, na.rm = TRUE)
 
 
 # Southern Brazil
