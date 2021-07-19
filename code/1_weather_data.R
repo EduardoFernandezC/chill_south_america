@@ -1,5 +1,5 @@
 library(chillR)
-library(alternativechillfunctions)
+library(dormancyR)
 
 # Look for weather stations ====
 
@@ -40,6 +40,7 @@ SA_GSOD_WS_80s_17s$STATION.NAME <- gsub("/", " ", SA_GSOD_WS_80s_17s$STATION.NAM
 
 # Download the data from the GSOD database ====
 
+# Please un-comment the following lines to download the data. Commented now to avoid mistakes.
 
 #SA_GSOD_list <- NULL
 
@@ -87,7 +88,7 @@ SA_GSOD_WS_80s_17s$STATION.NAME <- gsub("/", " ", SA_GSOD_WS_80s_17s$STATION.NAM
 
 
 
-# Runnig the loop above took about three days and there is not need to run it again since all the data
+# Running the loop above took about three days and there is not need to run it again since all the data
 # downloaded is now in "SA_GSOD_list"...
 
 

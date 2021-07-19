@@ -49,7 +49,7 @@ figure_3 <- tmap_arrange(plot_list[["observed_SWC"]], plot_list[["scen_1981"]], 
 figure_3
 
 # Save figure 3 with tmap save
-tmap_save(figure_3, "figures/final_figures/figure_3.png", width = 17.6, height = 23.4, units = "cm", dpi = 600)
+tmap_save(figure_3, "figures/final_figures/figure_3_b.png", width = 17.6, height = 23.4, units = "cm", dpi = 600)
 
 
 # Figure 4 will show the absolute chill for future scenarios. Will only use one combination of RCP and year for both the
@@ -61,7 +61,7 @@ figure_4 <- tmap_arrange(plot_list[["rcp45_2050_pessimistic"]], plot_list[["rcp4
 figure_4
 
 # Save figure 4 with tmap save
-tmap_save(figure_4, "figures/final_figures/figure_4.png", width = 17.6, height = 23.4, units = "cm", dpi = 600)
+tmap_save(figure_4, "figures/final_figures/figure_4_b.png", width = 17.6, height = 23.4, units = "cm", dpi = 600)
 
 
 # Figure 5 future chill levels in southern-South America
@@ -73,7 +73,7 @@ figure_5 <- tmap_arrange(chile_list[["rcp45_2050_pessimistic"]], chile_list[["rc
 figure_5
 
 # Save figure 5 with tmap save
-tmap_save(figure_5, "figures/final_figures/figure_5.png", width = 17.6, height = 23.4, units = "cm", dpi = 600)
+tmap_save(figure_5, "figures/final_figures/figure_5_b.png", width = 17.6, height = 23.4, units = "cm", dpi = 600)
 
 
 # Figure 6 will show the expected change in chill for future scenarios relative to the median historic chill from
@@ -86,4 +86,5 @@ figure_6 <- tmap_arrange(change_maps[["rcp45_2050_pessimistic"]], change_maps[["
 figure_6
 
 # Save figure 6 with tmap save
-tmap_save(figure_6, "figures/final_figures/figure_6.png", width = 17.6, height = 23.4, units = "cm", dpi = 600)
+tmap_save(figure_6, "figures/final_figures/figure_6_b.png", width = 17.6, height = 23.4, units = "cm", dpi = 600)
+

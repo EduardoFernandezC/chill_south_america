@@ -1,5 +1,5 @@
 library(chillR)
-library(alternativechillfunctions)
+library(dormancyR)
 library(dplyr)
 
 # This script was developed before realizing that "3_filling_gaps.R" did not work really well. All the weather
@@ -16,6 +16,12 @@ colnames(SA_GSOD_WS_90)[which(colnames(SA_GSOD_WS_90) %in% c("STATION.NAME", "La
   c("Name", "Latitude", "Longitude", "Elevation")
 
 
+colnames(CL_WS_90)[which(colnames(CL_WS_90) %in% c("Altitude", "Distance"))] <- c("Elevation", "distance")
+
+
+colnames(AR_WS_90)[which(colnames(AR_WS_90) %in% c("Station_name"))] <- "Name"
+
+
 # Put toghether (in a DF) all the weather stations 
 
 All_WS_90 <- suppressWarnings(bind_rows(SA_GSOD_WS_90, CL_WS_90, AR_WS_90))
@@ -28,7 +34,7 @@ All_data_90 <- c(SA_GSOD_list_90, CL_list_90, AR_list_90)
 
 # For loop to fill gaps by patching them with weather data from close weather stations
 
-All_patched <- list()
+All_patched_month <- list()
 
 for (i in 1 : length(All_WS_90$Name)){
   
@@ -51,37 +57,44 @@ for (i in 1 : length(All_WS_90$Name)){
 
   # Fill the gaps using data from the 40 closest weather stations
 
-  All_patched[[i]] <- patch_daily_temperatures2(All_data_90[[i]], All_data_90[All_WS_90[(2 : 41), "Name"]], 
-                                                max_mean_bias = 4, max_stdev_bias = 4)
+  All_patched_month[[i]] <- patch_daily_temps(All_data_90[[i]], All_data_90[All_WS_90[(2 : 41), "Name"]], 
+                                              max_mean_bias = 4, max_stdev_bias = 4, time_interval = "month")
   
-  # Order the DF start ok again
   
-  All_WS_90 <- suppressWarnings(bind_rows(SA_GSOD_WS_90, CL_WS_90, AR_WS_90))}
+  # Order the df to start again
+  
+  All_WS_90 <- suppressWarnings(bind_rows(SA_GSOD_WS_90, CL_WS_90, AR_WS_90))
+  
+  
+}
+
 
 
 # Check how many weather stations still have a lot of missing days
 
 
-for (i in 1 : 161)
+for (i in 1 : 161){
   
-  print(All_patched[[i]][["statistics"]][[length(All_patched[[i]][["statistics"]])]])
+  tmin <- sum(All_patched_month[[i]][["statistics"]][["Tmin"]][[length(All_patched_month[[i]][["statistics"]][["Tmin"]])]][5 : 8, "Gaps_remain"])
+  
+  tmax <- sum(All_patched_month[[i]][["statistics"]][["Tmax"]][[length(All_patched_month[[i]][["statistics"]][["Tmax"]])]][5 : 8, "Gaps_remain"])
+  
+  cat(i, ":", "Tmin", tmin, "Tmax", tmax, "\n")
+
+}
 
 
-# Remove the weather station number 124 (La Laguna Embalse) and 113 (El Yeso Embalse) since it has ~368 gaps
-# remain after patching with data from 40 auxiliary WS.
-
-All_patched <- All_patched[-c(113, 124)]
-
-All_WS_90 <- All_WS_90[-c(113, 124), ]
+# Some stations have a lot of missing days. I will retain those to be removed in the next step in case the fixing
+# does not work for others
 
 
 # Fill the remaining gaps through linear interpolation
 
 All_patched_fixed <- list()
 
-for (i in 1 : length(All_patched))
+for (i in 1 : length(All_patched_month))
   
-  All_patched_fixed[[i]] <- fix_weather(All_patched[[i]]$weather)
+  All_patched_fixed[[i]] <- fix_weather(All_patched_month[[i]]$weather)
 
 
 # Check for WS possibly having a lot of missing days
@@ -93,11 +106,32 @@ for (i in 1 : length(All_patched_fixed))
 rm(i, my_point)
 
 
-# Remove the WS 59 (Rodriguez Gallon) and 148 (Codpa) since they have at least one complete year missing
+# Remove the WS 134, 125, 124, 121, 116, 113 since all them show many continuous missing days within the dormant
+# period
 
-All_patched_fixed <- All_patched_fixed[-c(59, 148)]
+All_patched_fixed_final <- All_patched_fixed[-c(134, 125, 124, 121, 116, 113)]
 
-All_WS_90 <- All_WS_90[!(All_WS_90$Name %in% c("RODRIGUEZ BALLON", "Codpa")), ]
+
+All_WS_90_final <- All_WS_90[-c(134, 125, 124, 121, 116, 113), ]
+
+
+names(All_patched_fixed_final) <- All_WS_90_final$Name
+
+
+# Save both the final weather station data frame and the weather data
+
+dir.create("fixed_temps")
+
+write.csv(All_WS_90_final, "weather_stations_final.csv", row.names = FALSE)
+
+save_temperature_scenarios(lapply(All_patched_fixed_final, function (x) x[["weather"]]),
+                           path = "fixed_temps/",
+                           prefix = "patched_fixed")
+
+
+
+
+
 
 
 

@@ -22,11 +22,12 @@ library(cartography) #needed to include structures like stripes to maps
 
 
 #can I replace the Worig with SA?
-SA <- readOGR('data/sa_outline/SA_outline.shp')
+SA <- readOGR('data/sa_outline/SA_outline_2.shp')
 
 
 #read station coordinates with the projected chill (future and historic)
-stations <- read.csv('data/all_chill_projections.csv')
+stations <- read.csv('data/re_analysis/all_chill_projections.csv')
+
 
 # Replace the X before the scenario years for "scen_"
 stations <- rename_with(stations, function (x) str_replace(x, "X", "scen_"), starts_with("X"))
@@ -35,7 +36,7 @@ stations <- rename_with(stations, function (x) str_replace(x, "X", "scen_"), sta
 
 Porig <- SpatialPointsDataFrame(stations[, c("Longitude", "Latitude")],
                                 proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"),
-                                data = stations[, c(2, 5 : ncol(stations))])
+                                data = dplyr::select(stations, -station_name, -Latitude, -Longitude, -CTRY))
 
 # Replace point boundary extent with that of South America to make sure the interpolation is done for the whole extend of south america
 Porig@bbox <- SA@bbox
@@ -50,7 +51,7 @@ SA_countries <- World[World$iso_a3 %in% countries, ]
 #this function fills the south america outline with dashes
 SA_sfc <- hatchedLayer(x = SA_countries, mode = "sfc", pattern = 'right2left', density = 5)
 #set bounding box for SA
-SA_region <- extent(c(-8000000, -3000000, -6700000, 1700000))
+SA_region <- extent(c(-81, -30, -67, 17))
 SA_sfc <- as_Spatial(SA_sfc) #convert to S4 object
 SA_sfc <- crop(SA_sfc, SA_region) #crop france out of the selection, because it was needed for french guyana
 SA_test <- spTransform(SA_sfc, CRSobj = crs(Porig))
@@ -82,18 +83,18 @@ scenarios_fixed <- c(observed_SWC = "Historic observed", scen_1981 = "Historic s
                      scen_1993 = "Historic simulated (1993)", scen_1997 = "Historic simulated (1997)",
                      scen_2001 = "Historic simulated (2001)", scen_2005 = "Historic simulated (2005)",
                      scen_2009 = "Historic simulated (2009)", scen_2013 = "Historic simulated (2013)",
-                     scen_2017 = "Historic simulated (2017)", rcp45_2050_pessimistic = "RCP4.5 - 2050 pessimistic",
-                     rcp45_2050_intermediate = "RCP4.5 - 2050 intermediate",
-                     rcp45_2050_optimistic = "RCP4.5 - 2050 optimistic",
-                     rcp45_2085_pessimistic = "RCP4.5 - 2085 pessimistic",
-                     rcp45_2085_intermediate = "RCP4.5 - 2085 intermediate",
-                     rcp45_2085_optimistic = "RCP4.5 - 2085 optimistic",
-                     rcp85_2050_pessimistic = "RCP8.5 - 2050 pessimistic",
-                     rcp85_2050_intermediate = "RCP8.5 - 2050 intermediate",
-                     rcp85_2050_optimistic = "RCP8.5 - 2050 optimistic",
-                     rcp85_2085_pessimistic = "RCP8.5 - 2085 pessimistic",
-                     rcp85_2085_intermediate = "RCP8.5 - 2085 pessimistic",
-                     rcp85_2085_optimistic = "RCP8.5 - 2085 optimistic"  )
+                     scen_2017 = "Historic simulated (2017)", rcp45_2050_pessimistic = "RCP4.5 \u2013 2050 pessimistic",
+                     rcp45_2050_intermediate = "RCP4.5 \u2013 2050 intermediate",
+                     rcp45_2050_optimistic = "RCP4.5 \u2013 2050 optimistic",
+                     rcp45_2085_pessimistic = "RCP4.5 \u2013 2085 pessimistic",
+                     rcp45_2085_intermediate = "RCP4.5 \u2013 2085 intermediate",
+                     rcp45_2085_optimistic = "RCP4.5 \u2013 2085 optimistic",
+                     rcp85_2050_pessimistic = "RCP8.5 \u2013 2050 pessimistic",
+                     rcp85_2050_intermediate = "RCP8.5 \u2013 2050 intermediate",
+                     rcp85_2050_optimistic = "RCP8.5 \u2013 2050 optimistic",
+                     rcp85_2085_pessimistic = "RCP8.5 \u2013 2085 pessimistic",
+                     rcp85_2085_intermediate = "RCP8.5 \u2013 2085 pessimistic",
+                     rcp85_2085_optimistic = "RCP8.5 \u2013 2085 optimistic"  )
 
 #load tmin and tmax map for july
 min_temp_jul <- raster('data/world_clim/wc2-2/wc2.1_30s_tmin_07.tif')
@@ -116,7 +117,7 @@ f.temp_min <- as.formula(min_temp_jul ~ Longitude + Latitude)
 f.temp_max <- as.formula(max_temp_jul ~ Longitude + Latitude)
 
 # #set up variogram
-# var.smpl.temp_min <- variogram(f.temp_min, Porig,cutoff = 1400)
+# var.smpl.temp_min <- variogram(f.temp_min, Porig, cutoff = 1400)
 # var.smpl.temp_max <- variogram(f.temp_max, Porig)
 # 
 # dat.fit.temp_min <- fit.variogram(var.smpl.temp_min, fit.ranges = FALSE,
@@ -187,6 +188,14 @@ chile_list <- list()
 height <- 12
 width <- 11
 
+# Create a directory to save the files from the re-analysis
+dir.create("figures/re_analysis")
+dir.create("figures/re_analysis/correction_model")
+dir.create("figures/re_analysis/maps")
+
+# Source a helper function to align the legend in 3D correction model plot
+source("code/utilities/helper_function.R")
+
 for(scen in scenarions){
   
   #krig the tmin tmax data on a plane
@@ -231,7 +240,7 @@ for(scen in scenarions){
   correction_plane <- cowplot::ggdraw(align_legend(correction_plane)) 
   
   # ggsave(plot = correction_plane,
-  #        filename = paste('figures/interpolation/correction_plane_', scen, '.jpg', sep = ''),
+  #        filename = paste('figures/re_analysis/correction_model/correction_plane_', scen, '.jpg', sep = ''),
   #        height = 10, width = 15, units = 'cm')
   
   #save number of rows and cols
@@ -350,7 +359,7 @@ for(scen in scenarions){
   
   chill_list <- append(chill_list, r.m)
 
-  f_name <- paste('figures/interpolation/adjusted_chill_', scen, '.png', sep = '')
+  f_name <- paste('figures/re_analysis/maps/adjusted_chill_', scen, '.png', sep = '')
   
   chill_map <- tm_shape(SA) +
     tm_fill(col = 'grey10') +
@@ -373,12 +382,12 @@ for(scen in scenarions){
     tm_add_legend(type = "symbol", labels = "  Weather station", shape = 4, size = 0.5, col = "firebrick") +
     tm_layout(main.title = paste0("      ", scenarios_fixed[[scen]]),
               main.title.position = "center",
-              main.title.size = 1.4,
+              main.title.size = 1.3,
               main.title.color = "black",
               legend.outside = F,
               legend.title.size = 0.85,
               legend.text.size = 0.65,
-              legend.position = c(0.665, 0.005),
+              legend.position = c(0.65, 0.005),
               outer.margins = c(0.001, 0.001, 0.001, 0.001),
               bg.color = "black",
               attr.color = "white",
@@ -419,7 +428,7 @@ for(scen in scenarions){
     tm_add_legend(type = "symbol", labels = "  Weather station", shape = 4, size = 0.5, col = "firebrick") +
     tm_layout(main.title = paste0("      ", scenarios_fixed[[scen]]),
               main.title.position = "center",
-              main.title.size = 1.4,
+              main.title.size = 1.3,
               main.title.color = "black",
               legend.outside = F,
               legend.title.size = 0.85,
@@ -434,12 +443,14 @@ for(scen in scenarions){
   
   chile_list <- append(chile_list, list(chile))
   
-  #tmap_save(chile, filename = f_name, height = height, width = width, units = 'cm')  
+  # tmap_save(chile,
+  #           filename = paste('figures/re_analysis/maps/adjusted_chill_south_SA_', scen, '.png', sep = ''),
+  #           height = height, width = width, units = 'cm')  
   
   
   new_seq <- seq(-50, 90, by = 10)
   
-  f_name <- paste('figures/interpolation/chill_correction_', scen, '.png', sep = '')
+  f_name <- paste('figures/re_analysis/maps/chill_correction_', scen, '.png', sep = '')
   
   chill_correction <- tm_shape(SA_test) +
     tm_lines(col = "grey") +
@@ -486,10 +497,13 @@ median_raster_scen <- calc(brick_raster, median)
 # Create a list to save the plots
 change_maps <- list()
 
+# Create a directory to save the plots
+dir.create("figures/re_analysis/change")
+
 #loop for change 2017 to future scenarios
 for(scen in scenarions[12 : 23]){
   #create file name
-  f_name <- paste('figures/interpolation/change_hist_sim_vs_', scen, '.png', sep = '')
+  f_name <- paste('figures/re_analysis/change/change_hist_sim_vs_', scen, '.png', sep = '')
   
   change_map <- tm_shape(SA) +
     tm_fill(col = 'grey10') +
@@ -498,7 +512,7 @@ for(scen in scenarions[12 : 23]){
     tm_shape(chill_list[[scen]] - median_raster_scen) +
     tm_raster(palette = get_brewer_pal('RdYlBu', n = 10),
               midpoint = 0,
-              title = 'SWC relative to\n 1981 - 2017',
+              title = 'SWC relative to\n 1981 \u2013 2017',
               style = 'cont', legend.reverse = TRUE, breaks = seq(-40, 10, length.out = 6),
               legend.format = list(suffix = " CP", text.align = "center")) +
     tm_shape(Porig) +
@@ -512,12 +526,12 @@ for(scen in scenarions[12 : 23]){
     tm_add_legend(type = "symbol", labels = "  Weather station", shape = 4, size = 0.5, col = "firebrick") +
     tm_layout(main.title = paste0("      ", scenarios_fixed[[scen]]),
               main.title.position = "center",
-              main.title.size = 1.4,
+              main.title.size = 1.3,
               main.title.color = "black",
               legend.outside = F,
               legend.title.size = 0.85,
-              legend.text.size = 0.65,
-              legend.position = c(0.665, 0.005),
+              legend.text.size = 0.64,
+              legend.position = c(0.67, 0.005),
               outer.margins = c(0.001, 0.001, 0.001, 0.001),
               bg.color = "black",
               attr.color = "white",
@@ -525,7 +539,7 @@ for(scen in scenarions[12 : 23]){
   
   change_map
   
-  #tmap_save(change_map, filename = f_name, height = height, width = width, units = 'cm')  
+  #tmap_save(change_map, filename = f_name, height = height, width = width+1, units = 'cm')  
   
   # Save the maps
   change_maps <- append(change_maps, list(change_map))
@@ -539,7 +553,7 @@ names(change_maps) <- scenarions[12 : 23]
 
 #calculate change 1981 to 2017 (2017 minus 1981)
 scen <- scenarions[2]
-f_name <- paste('figures/interpolation/change_2017_', scen, '.png', sep = '')
+f_name <- paste('figures/re_analysis/change/change_2017_', scen, '.png', sep = '')
 
 change_map <- tm_shape(SA) +
   tm_fill(col = 'grey10') +
@@ -560,14 +574,14 @@ change_map <- tm_shape(SA) +
   tm_scale_bar(position = c(0.57, 0.925), bg.color = 'transparent', text.size = 0.6, color.dark = "grey20") +
   tm_add_legend(type = "line", labels = "Excluded", col = "grey35", lwd = 3) +
   tm_add_legend(type = "symbol", labels = "  Weather station", shape = 4, size = 0.5, col = "firebrick") +
-  tm_layout(main.title = "      Chill change 1981 - 2017",
+  tm_layout(main.title = "      Chill change 1981 \u2013 2017",
             main.title.position = "center",
-            main.title.size = 1.4,
+            main.title.size = 1.2,
             main.title.color = "black",
             legend.outside = F,
             legend.title.size = 0.85,
-            legend.text.size = 0.65,
-            legend.position = c(0.665, 0.005),
+            legend.text.size = 0.6,
+            legend.position = c(0.65, 0.005),
             outer.margins = c(0.001, 0.001, 0.001, 0.001),
             bg.color = "black",
             attr.color = "white",

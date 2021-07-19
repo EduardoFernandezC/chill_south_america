@@ -10,11 +10,12 @@ library(raster) #use for extent function
 library(maptools) #still not sure, maybe to write a simplified SA outline as a shape file
 
 #read climate station data
-stations <- read.csv('data/all_chill_projections.csv')
+stations <- read.csv('data/re_analysis/all_chill_projections.csv')
+
 #transform to spatial data frame
 Porig<-SpatialPointsDataFrame(stations[,c("Longitude","Latitude")],
                               proj4string=CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"),
-                              data=stations[,c(2,6:27)])
+                              data=stations[,c(5 : 28)])
 
 ###prepare shapefile of SA, convert it to the right format and save it 
 
@@ -22,14 +23,14 @@ data(World) #read dataset from tmap
 #select countries for SA outline, include france because of french guyana
 countries <- c('FRA','ARG', 'BOL', 'BRA', 'CHL', 'COL', 'ECU',  'GUY', 'PER', 'PRY', 'SUR', 'URY', 'VEN')
 SA <- World[World$iso_a3 %in% countries,]
-SA_extent = extent(c(-8000000,-3000000,-6700000,1700000)) #set the boundaries of SA
+SA_extent <- extent(c(-82,-30,-67,17)) #set the boundaries of SA
 SA <- as_Spatial(SA)
 SA <- crop(SA, SA_extent) #findout which package is required for this one
 SA <- spTransform(SA, CRSobj = crs(Porig))
 #remove the area column because it caused trouble when saving the shape file
 SA$area <- NA
 #savethe shapefile
-shapefile(SA, filename='data/sa_outline//SA_outline.shp')
+shapefile(SA, filename='data/sa_outline/SA_outline_2.shp', overwrite = TRUE)
 
 #read the saved shapefile to see if it works
 SA <- readOGR('data/sa_outline/SA_outline.shp')

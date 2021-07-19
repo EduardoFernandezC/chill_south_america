@@ -6,10 +6,10 @@ library(raster) # Used to clip out thiessen polygons
 library(sp) # Used for the spsample function
 library(rgeos)
 
-stations <- read.csv('data/all_chill_projections.csv')
+stations <- read.csv('data/re_analysis/all_chill_projections.csv')
 Porig<-SpatialPointsDataFrame(stations[,c("Longitude","Latitude")],
                               proj4string=CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"),
-                              data=stations[,c(2,6:27)])
+                              data=stations[,c(5:28)])
 
 #read files of avg temp per month from WorldClim
 #https://www.worldclim.org/data/worldclim21.html
@@ -36,15 +36,15 @@ tm_shape(avg_temp_jul, bbox = b) +
   tm_legend(legend.outside=TRUE)
 
 #extract avg temp per month from the files to the station df
-stations$avg_temp_jul <- extract(avg_temp_jul,Porig)
-stations$avg_temp_aug <- extract(avg_temp_aug,Porig)
+stations$avg_temp_jul <- raster::extract(avg_temp_jul,Porig)
+stations$avg_temp_aug <- raster::extract(avg_temp_aug,Porig)
 
-stations$min_temp_jul <- extract(min_temp_jul,Porig)
-stations$min_temp_aug <- extract(min_temp_aug,Porig)
+stations$min_temp_jul <- raster::extract(min_temp_jul,Porig)
+stations$min_temp_aug <- raster::extract(min_temp_aug,Porig)
 
-stations$max_temp_jul <- extract(max_temp_jul,Porig)
-stations$max_temp_aug <- extract(max_temp_aug,Porig)
+stations$max_temp_jul <- raster::extract(max_temp_jul,Porig)
+stations$max_temp_aug <- raster::extract(max_temp_aug,Porig)
 
 #save updated stations-df
-write.csv(stations, 'data/all_chill_projections.csv',
+write.csv(stations, 'data/re_analysis/all_chill_projections.csv',
           row.names = F)
