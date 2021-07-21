@@ -1,7 +1,7 @@
 library(chillR)
 library(tidyverse)
 
-# Load the weather data from folder
+# Load the weather data from folder. Make sure you used the folder used at the end of scrip 3.1_filling_gaps.R
 
 weather_data <- load_temperature_scenarios("data/re_analysis/fixed_temps/",
                                            prefix = "patched_fixed")
@@ -11,7 +11,7 @@ weather_data <- load_temperature_scenarios("data/re_analysis/fixed_temps/",
 weather_data <- lapply(weather_data, function (x) select(x, -DATE.1))
 
 
-# Load the information for the weather stations
+# Load the information for the weather stations. Make sure you used the folder used at the end of scrip 3.1_filling_gaps.R
 
 weather_info <- read.csv("data/re_analysis/weather_stations_final.csv")
 
@@ -26,7 +26,7 @@ names(weather_data) <- weather_info$Name
 Start_JDay <- 121
 End_JDay <- 243
 
-dir.create("data/re_analysis/observed_chill")
+dir.create("data/re_analysis/observed_chill") # Change this path accordingly
 
 chill_observed <- list()
 
@@ -44,7 +44,7 @@ for (i in 1 : length(weather_data)){
 
 # Simulate historic temperature scenarios from records ====
 
-dir.create("data/re_analysis/historic_simulated_temps")
+dir.create("data/re_analysis/historic_simulated_temps") # Change this accordingly
 
 historic_weather_scenarios <- list()
 
@@ -170,7 +170,7 @@ for (i in 1 : length(weather_data)){
 
 dir.create("data/re_analysis/future_chill")
 
-for (i in 1 : 30){
+for (i in 1 : nrow(weather_info)){
   for(RCP in RCPs){
     for(Time in Times){
       

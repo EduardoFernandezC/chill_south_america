@@ -3,7 +3,7 @@ library(dormancyR)
 
 # Look for weather stations ====
 
-# List 1500 stations from the GSOD database using Quillota as central point. This may change of course, but 
+# List 1,500 stations from the GSOD database using Quillota, Chile as central point. This may change of course, but 
 # temperate trees are normally grown at southern places.
 
 SA_GSOD_Weat_Stat <- handle_gsod("list_stations", location = c(-71.2092, -32.8958, 130),
@@ -40,7 +40,7 @@ SA_GSOD_WS_80s_17s$STATION.NAME <- gsub("/", " ", SA_GSOD_WS_80s_17s$STATION.NAM
 
 # Download the data from the GSOD database ====
 
-# Please un-comment the following lines to download the data. Commented now to avoid mistakes.
+### Please un-comment the following lines to download the data. Commented now to avoid mistakes.
 
 #SA_GSOD_list <- NULL
 
@@ -129,22 +129,16 @@ SA_GSOD_list_90 <- SA_GSOD_list[which(names(SA_GSOD_list) %in% as.character(SA_G
 
 
 
-# Check for WS in chilean database ====
+# Check for WS in a Chilean database ====
 
-# Include more weather stations from the chilean database by using chile_weather() function
-
-# Set the initial parameters
-
-path_zip_tmin <- "C:/Users/Admin/Dropbox/Doctorado/Doctorado/Chile_weathers/cr2_tasminDaily_2018_ghcn.zip"
-
-path_zip_tmax <- "C:/Users/Admin/Dropbox/Doctorado/Doctorado/Chile_weathers/cr2_tasmaxDaily_2018_ghcn.zip"
+# Include more weather stations from the Chilean database by using handle_chile_cr2() function
 
 # Call the function
 
-CL_Weat_Stat <- chile_weather("info_stations", Initial_Date = "1980-01-01", End_Date = "2017-12-31",
+CL_Weat_Stat <- handle_chile_cr2(action = "info_stations", begin = 19800101, end = 20171231,
                                      latitude = -32.8958, longitude = -71.2092,
-                                     path_zip_tmin = path_zip_tmin, path_zip_tmax = path_zip_tmax,
-                                     Number_of_stations = 909)
+                                     path_zip_tmin = NULL, path_zip_tmax = NULL,
+                                     number_of_stations = 909)
 
 
 # Select only weather stations having more than 90% of data complete
@@ -155,14 +149,18 @@ CL_WS_90 <- CL_Weat_Stat[CL_Weat_Stat$Perc_days_complete >= 90 &
                            CL_Weat_Stat$Latitude > -56, ]
 
 
-# Get the weather data from the chilean database only for those stations having more than 90% of data complete
+# Get the weather data from the Chilean database only for those stations having more than 90% of data complete
 
-CL_list_90 <- list(chile_weather("my_data", Initial_Date = "1980-01-01", End_Date = "2017-12-31",
+# Define the location of the zip files to skip downloading them again
+path_zip_tmin <- "temp_data/cr2_tasmindaily_2018_ghcn.zip"
+path_zip_tmax <- "temp_data/cr2_tasmaxdaily_2018_ghcn.zip"
+
+CL_list_90 <- list(handle_chile_cr2("my_data", begin = 19800101, end = 20171231,
                                  latitude = -32.8958, longitude = -71.2092,
                                  path_zip_tmin = path_zip_tmin, path_zip_tmax = path_zip_tmax))
 
-CL_list_90 <- c(CL_list_90, chile_weather("station_list_data", Initial_Date = "1980-01-01",
-                                          End_Date = "2017-12-31",
+CL_list_90 <- c(CL_list_90, handle_chile_cr2("list_data", begin = 19800101,
+                                          end = 20171231,
                                           latitude = -32.8958, longitude = -71.2092,
                                           path_zip_tmin = path_zip_tmin, path_zip_tmax = path_zip_tmax,
                                           stations_df = CL_WS_90))
@@ -186,6 +184,9 @@ names(CL_list_90) <- as.character(CL_WS_90$Name)
 
 
 # Get some data from Argentina ====
+
+# Weather data from Argentina is available upon request at the mail of the corresponding author.
+# The code is fully working even if these stations are not included though small modifications are needed.
 
 # This data were obtained from the patagonia project
 

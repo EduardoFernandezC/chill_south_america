@@ -1,5 +1,5 @@
 library(chillR)
-library(alternativechillfunctions)
+library(dormancyR)
 
 # This script is to fill the gaps in the main weather stations
 
@@ -12,7 +12,7 @@ library(alternativechillfunctions)
 SA_GSOD_WS_90_aux_data <- list()
 
 
-for (i in  79 : length(SA_GSOD_WS_90$chillR_code)){
+for (i in  1 : length(SA_GSOD_WS_90$chillR_code)){
   
   # Extract the latitude and longitude of the i element of the list that contains weather data
   # for places with 90% of data complete between 1980 - 2017

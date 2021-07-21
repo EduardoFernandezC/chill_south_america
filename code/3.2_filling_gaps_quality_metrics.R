@@ -2,9 +2,7 @@ library(tidyverse)
 
 # This script is to obtain some quality values regarding our patching and filling procedure
 
-# It is important to load the Rdata object generated in the script 3.1_filling_gaps.R
-
-load("fixed_WS.RData")
+# It is important to generate the elements in the script 3.1_filling_gaps.R
 
 # First, we compute the percentage of data complete to get an idea of the mean percentage of missing values.
 # This is done to the All_data_90 object minus 4 stations that were not used at the end of the analysis because the

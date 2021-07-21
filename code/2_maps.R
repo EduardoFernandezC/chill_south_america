@@ -1,6 +1,9 @@
 library(ggplot2)
 library(tmap)
 
+# Note: this script was modified several times during the interpolation procedure. Since this is only to generate maps,
+# I strongly recommend to run this one after all others are finished.
+
 # Plot the first map only with GSOD weather stations ====
 
 # Define the borders of the countries across SA
@@ -53,9 +56,7 @@ ggsave("./figures/WS_90_complete_GSOD_CR_AR.png", dpi = 800)
 
 # Map for all the weather stations remaining after the patching and fixing process (28/11/19) ====
 
-# load the data 
-
-load("fixed_WS.RData")
+# To generate All_WS_90, please run "3.1_filling_gaps.R"
 
 # Classify the database to get the legend according to the source
 

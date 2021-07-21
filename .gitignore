@@ -43,10 +43,11 @@ rsconnect/
 data/*.rar
 
 # csv data files
-data/future_temps/
-data/projections/
-data/patched_temps/
-data/re_analysis/
+#data/future_temps/
+#data/projections/
+#data/patched_temps/
+#data/re_analysis/
+data/
 
 # manuscript
 manuscript/
