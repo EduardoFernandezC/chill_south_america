@@ -93,7 +93,7 @@ scenarios_fixed <- c(observed_SWC = "Historic observed", scen_1981 = "Historic s
                      rcp85_2050_intermediate = "RCP8.5 \u2013 2050 intermediate",
                      rcp85_2050_optimistic = "RCP8.5 \u2013 2050 optimistic",
                      rcp85_2085_pessimistic = "RCP8.5 \u2013 2085 pessimistic",
-                     rcp85_2085_intermediate = "RCP8.5 \u2013 2085 pessimistic",
+                     rcp85_2085_intermediate = "RCP8.5 \u2013 2085 intermediate",
                      rcp85_2085_optimistic = "RCP8.5 \u2013 2085 optimistic"  )
 
 #load tmin and tmax map for july
@@ -576,11 +576,11 @@ change_map <- tm_shape(SA) +
   tm_add_legend(type = "symbol", labels = "  Weather station", shape = 4, size = 0.5, col = "firebrick") +
   tm_layout(main.title = "      Chill change 1981 \u2013 2017",
             main.title.position = "center",
-            main.title.size = 1.2,
+            main.title.size = 1.3,
             main.title.color = "black",
             legend.outside = F,
             legend.title.size = 0.85,
-            legend.text.size = 0.6,
+            legend.text.size = 0.64,
             legend.position = c(0.65, 0.005),
             outer.margins = c(0.001, 0.001, 0.001, 0.001),
             bg.color = "black",
